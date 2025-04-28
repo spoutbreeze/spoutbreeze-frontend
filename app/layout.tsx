@@ -1,17 +1,11 @@
+import Navbar from "@/components/Navbar";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
-import { AuthProvider } from "./providers";
+// import { AuthProvider } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,13 +18,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
-        {children}
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/spoutbreeze_icon.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>SpoutBreeze</title>
+      </head>
+      <body className={`${montserrat.className}`}>
+        <AppRouterCacheProvider>
+          <nav>
+            <Navbar />
+          </nav>
+          <main className="pt-[80px]">{children}</main>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );
