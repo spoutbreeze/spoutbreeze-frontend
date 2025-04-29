@@ -4,7 +4,7 @@ const HeroSection: React.FC = () => {
   return (
     <section className="bg-[#F6F6F6] text-white pt-[90px] pb-[100px] px-[100px]">
       <div className="">
-        <h1 className="text-[64px] font-bold mb-2.5 text-[#262262]">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64xl] font-bold mb-2.5 text-[#262262]">
           SpoutBreeze
         </h1>
         <h2 className="text-4xl font-semibold mb-5 text-[#5B5D60]">
