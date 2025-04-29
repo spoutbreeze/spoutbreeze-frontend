@@ -2,7 +2,7 @@ import React from "react";
 
 const HeroSection: React.FC = () => {
   return (
-    <section className="bg-[#F6F6F6] text-white py-[100px] px-[100px]">
+    <section className="bg-[#F6F6F6] text-white pt-[90px] pb-[100px] px-[100px]">
       <div className="">
         <h1 className="text-[64px] font-bold mb-2.5 text-[#262262]">
           SpoutBreeze
