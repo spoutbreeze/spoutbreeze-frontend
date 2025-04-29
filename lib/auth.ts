@@ -30,7 +30,7 @@ export const refreshToken = async () => {
   if (!refresh_token) return null;
 
   try {
-    const response = await fetch("http://localhost:8000/auth/refresh", {
+    const response = await fetch("http://localhost:8000/api/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token }),
