@@ -32,7 +32,7 @@ export default function CallbackPage() {
         if (response.ok) {
           const data = await response.json();
           setTokens(data.access_token, data.refresh_token);
-          router.push("/redirect"); // or home page
+          router.push("/home"); // or home page
         } else {
           const errorText = await response.text();
           console.error("Login failed:", response.status, errorText);

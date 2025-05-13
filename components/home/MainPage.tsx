@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import SideBar from "./SidebarMenu";
 import ContentDisplay from "./ContentDisplay";
 import { MenuItem } from "./SidebarMenu";
-import Channels from "./channelsPage/Channels";
+import Channels from "./channelsPage/ChannelsComponent";
 import Recordings from "./RecordingsPage/Recordings";
 import Dashboard from "./dashboardPage/Dashboard";
 import Endpoints from "./endpointsPage/Endpoints";

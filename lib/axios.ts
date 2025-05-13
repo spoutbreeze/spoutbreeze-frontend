@@ -21,7 +21,7 @@ axiosInstance.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401s like BFF
+// Handle 401 errors and refresh token
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {

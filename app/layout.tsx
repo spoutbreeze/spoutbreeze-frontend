@@ -24,7 +24,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>SpoutBreeze</title>
       </head>
-      <body className={`${montserrat.className}`}>
+      <body className={`${montserrat.className} flex flex-col min-h-screen mx-auto max-w-screen-container`}>
         <AppRouterCacheProvider>
           <nav>
             <Navbar />
