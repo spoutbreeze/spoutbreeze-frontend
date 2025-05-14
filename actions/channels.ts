@@ -9,7 +9,7 @@ export interface Channel {
 }
 
 export interface ChannelWithUserName extends Channel {
-    creator_name: string;
+  creator_name: string;
 }
 
 export interface Channels {
@@ -22,30 +22,46 @@ export interface CreateChannelReq {
 }
 
 export const fetchChannels = async (): Promise<Channels> => {
-    try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            return { channels: [], total: 0 };
-        }
-
-        const response = await axiosInstance.get("/api/channels/all");
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching channels:", error);
-        throw error;
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return { channels: [], total: 0 };
     }
-}
+
+    const response = await axiosInstance.get("/api/channels/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching channels:", error);
+    throw error;
+  }
+};
+
+export const createChannel = async (
+  data: CreateChannelReq
+): Promise<Channel> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return {} as Channel;
+    }
+    const response = await axiosInstance.post("/api/channels/", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating channel:", error);
+    throw error;
+  }
+};
 
 export const deleteChannel = async (id: string): Promise<void> => {
-    try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            return;
-        }
-
-        await axiosInstance.delete(`/api/channels/${id}`);
-    } catch (error) {
-        console.error("Error deleting channel:", error);
-        throw error;
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return;
     }
-}
+
+    await axiosInstance.delete(`/api/channels/${id}`);
+  } catch (error) {
+    console.error("Error deleting channel:", error);
+    throw error;
+  }
+};

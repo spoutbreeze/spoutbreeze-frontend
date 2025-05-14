@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   fetchChannels,
+  createChannel,
   deleteChannel,
   Channels,
   Channel,
@@ -17,28 +18,29 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import ChannelPage from "./ChannelPage";
+import AddChannelModal from "./AddChannelModal";
 
 const colorPalette = [
-  "#FF9024", // Orange
-  "#27AAFF", // Blue
-  "#9C27B0", // Purple
-  "#4CAF50", // Green
-  "#F44336", // Red
-  "#009688", // Teal
-  "#673AB7", // Deep Purple
-  "#3F51B5", // Indigo
-  "#2196F3", // Light Blue
-  "#00BCD4", // Cyan
-  "#795548", // Brown
-  "#FF5722", // Deep Orange
-  "#607D8B", // Blue Grey
-  "#E91E63", // Pink
+  "#27AAFF", // Light Blue
+  "#FF092A", // Red
+  "#44D500", // Green
+  "#9747FF", // Purple
+  "#2E27FF", // Indigo
+  "#FF0099", // Pink
+  "#FF8800", // Deep Orange
+  "#FFC919", // Yellow
 ];
 
 // Function to get a random color based on the channel ID
 const getRandomColor = (id: string) => {
-  const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colorPalette[hash % colorPalette.length];
+  // Use a more distributed hash algorithm
+  const hash = id.split("").reduce((acc, char, index) => {
+    // Prime multiplication helps distribute values better
+    return acc + char.charCodeAt(0) * (31 ** index % 127);
+  }, 0);
+
+  // Use a larger prime number for modulo to improve distribution
+  return colorPalette[Math.abs(hash) % colorPalette.length];
 };
 
 const ChannelsComponent: React.FC = () => {
@@ -48,7 +50,16 @@ const ChannelsComponent: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedChannel, setSelectedChannel] = useState<ChannelWithUserName | null>(null);
+  const [selectedChannel, setSelectedChannel] =
+    useState<ChannelWithUserName | null>(null);
+  const [openModal, setOpenModal] = useState(false);
+
+  const handleOpenModal = () => {
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
 
   useEffect(() => {
     const fetchChannelsData = async () => {
@@ -78,6 +89,31 @@ const ChannelsComponent: React.FC = () => {
     fetchChannelsData();
   }, []);
 
+  const handleAddChannel = async (formData: CreateChannelReq) => {
+    try {
+      await createChannel(formData);
+
+      const data = await fetchChannels();
+
+      // Add user names to channels
+      const channelsWithUserName = await Promise.all(
+        data.channels.map(async (channel) => {
+          const user = await fetchUserById(channel.creator_id || "");
+          return {
+            ...channel,
+            creator_name: user
+              ? `${user.first_name} ${user.last_name}`
+              : "Unknown",
+          };
+        })
+      );
+      setChannelsData({ channels: channelsWithUserName, total: data.total });
+      handleCloseModal();
+    } catch (error) {
+      setError("Failed to create channel");
+    }
+  };
+
   const handleDeleteChannel = async (id: string) => {
     try {
       await deleteChannel(id);
@@ -102,64 +138,46 @@ const ChannelsComponent: React.FC = () => {
       <ChannelPage
         channel={selectedChannel}
         onBack={handleBackToChannels}
+        channelId={selectedChannel.id}
       />
-    )
+    );
   }
-
 
   return (
     <section className="px-10 pt-10 h-screen overflow-y-auto">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-[18px] font-medium text-black mb-[20px]">
           Channels
         </h1>
-        <button className="mb-[14px] font-medium text-[13px] border p-2.5 text-[#27AAFF] rounded-[2px] cursor-pointer">
-          + Add endpoint
+        <button
+          className="mb-[14px] font-medium text-[13px] border p-2.5 text-[#27AAFF] rounded-[2px] cursor-pointer"
+          onClick={handleOpenModal}
+        >
+          + Create a channel
         </button>
       </div>
       {loading && <p>Loading...</p>}
       {error && <p>{error}</p>}
       {!loading && !error && (
-        <Box
-          sx={{
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(303px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {channelsData.channels.map((channel) => (
-            <Card
+            <div
               key={channel.id}
-              sx={{
-                backgroundColor: getRandomColor(channel.id),
-                width: 303,
-                height: 101,
-                borderRadius: "10px",
-                color: "white",
-                position: "relative",
-                cursor: "pointer",
-              }}
+              className="h-[110px] rounded-[10px] relative cursor-pointer"
+              style={{ backgroundColor: getRandomColor(channel.id) }}
               onClick={() => handleChannelClick(channel)}
             >
-              <CardContent
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  padding: "15px !important",
-                }}
-              >
+              <div className="flex flex-col h-full text-white p-[15px]">
                 <span className="text-lg font-semibold mb-auto">
                   {channel.name}
                 </span>
-                <span className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[12px] font-medium">
                     Created by {channel.creator_name}
                   </span>
                   <Image
                     src="/delete_icon_outlined_white.svg"
-                    alt="Channel Image"
+                    alt="Delete Channel"
                     width={15}
                     height={16}
                     className="cursor-pointer"
@@ -168,12 +186,17 @@ const ChannelsComponent: React.FC = () => {
                       handleDeleteChannel(channel.id);
                     }}
                   />
-                </span>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+            </div>
           ))}
-        </Box>
+        </div>
       )}
+      <AddChannelModal
+        open={openModal}
+        onClose={handleCloseModal}
+        onAdd={handleAddChannel}
+      />
     </section>
   );
 };
