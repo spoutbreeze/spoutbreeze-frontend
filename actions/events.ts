@@ -21,6 +21,8 @@ export interface Event {
   organizers: Organizers[];
   channel_id: string;
   meeting_id: string;
+  moderator_pw: string;
+  attendee_pw: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +31,18 @@ export interface Events {
   events: Event[];
   total: number;
   statusCode?: number;
+}
+
+export interface CreateEventReq {
+  title: string;
+  description: string;
+  occurs: string;
+  start_date: Date;
+  end_date: Date;
+  start_time: Date;
+  timezone: string;
+  organizer_ids: string[];
+  channel_name: string;
 }
 
 export const fetchEvents = async (): Promise<Events> => {
@@ -87,3 +101,19 @@ export const fetchEventsByChannelId = async (
     throw error;
   }
 };
+
+export const createEvent = async (
+  data: CreateEventReq
+): Promise<Event> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return {} as Event;
+    }
+    const response = await axiosInstance.post("/api/events/", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating event:", error);
+    throw error;
+  }
+}
