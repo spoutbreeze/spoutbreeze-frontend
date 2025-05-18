@@ -1,51 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { setTokens } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { exchangeCodeForToken } from "@/lib/auth";
 
 export default function CallbackPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTokens = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      console.log("URL Params:", urlParams.toString());
-      const code = urlParams.get("code");
-      console.log("Code:", code);
+    const code = searchParams.get("code");
 
-      if (!code) return;
-
-      console.log("Fetching tokens...");
-      const redirect_uri = "http://localhost:3000/auth/callback";
-
-      try {
-        const response = await fetch("http://localhost:8000/api/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code,
-            redirect_uri,
-          }),
+    if (code && typeof code === "string") {
+      exchangeCodeForToken(code)
+        .then(() => {
+          router.push("/home"); // Redirect to your app's main page
+        })
+        .catch((err) => {
+          console.error(err);
+          setError("Authentication failed. Please try again.");
         });
+    }
+  }, [searchParams, router]);
 
-        if (response.ok) {
-          const data = await response.json();
-          setTokens(data.access_token, data.refresh_token);
-          router.push("/home"); // or home page
-        } else {
-          const errorText = await response.text();
-          console.error("Login failed:", response.status, errorText);
-          alert(`Login failed: ${response.status} ${errorText}`);
-        }
-      } catch (error) {
-        console.error("Error during token exchange:", error);
-        alert("Error during login process");
-      }
-    };
+  if (error) {
+    return <div className="p-4 text-red-600">{error}</div>;
+  }
 
-    fetchTokens();
-  }, [router]);
-
-  return <p>Authenticating...</p>;
+  return <div className="p-4">Authenticating...</div>;
 }
