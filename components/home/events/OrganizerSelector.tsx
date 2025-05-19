@@ -151,12 +151,13 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
             <List>
               {availableUsers.map((user) => (
                 <ListItem
-                  button
+                  component="div"
                   key={user.id}
                   onClick={() => {
-                    onAddOrganizer(user.id); // Pass only the ID
+                    onAddOrganizer(user.id);
                     setOpen(false);
                   }}
+                  sx={{ cursor: 'pointer' }}
                 >
                   <ListItemAvatar>
                     <Avatar

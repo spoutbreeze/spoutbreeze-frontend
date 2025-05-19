@@ -79,19 +79,21 @@ export const fetchEventsByChannelId = async (
         // Handle specific status codes
         if (error.response) {
           const status = error.response.status;
-          
+
           if (status === 404) {
             // Return empty events with a specific error flag
             return { events: [], total: 0, statusCode: 404 };
           }
-          
+
           if (status === 500) {
             // Return empty events with a specific error flag
             return { events: [], total: 0, statusCode: 500 };
           }
-          
+
           // For other error statuses
-          throw new Error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+          throw new Error(
+            `API Error: ${error.response.status} - ${error.response.statusText}`
+          );
         }
       }
       throw error; // Re-throw for other errors
@@ -102,9 +104,7 @@ export const fetchEventsByChannelId = async (
   }
 };
 
-export const createEvent = async (
-  data: CreateEventReq
-): Promise<Event> => {
+export const createEvent = async (data: CreateEventReq): Promise<Event> => {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -116,4 +116,20 @@ export const createEvent = async (
     console.error("Error creating event:", error);
     throw error;
   }
-}
+};
+
+// Fucntion to start an event, it will return the join url
+export const startEvent = async (eventId: string): Promise<string | null> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return null;
+    }
+
+    const response = await axiosInstance.post(`/api/events/${eventId}/start`);
+    return response.data.join_url;
+  } catch (error) {
+    console.error("Error starting event:", error);
+    return null;
+  }
+};

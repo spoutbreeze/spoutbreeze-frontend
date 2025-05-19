@@ -18,14 +18,6 @@ export const initPKCE = async () => {
   return { codeVerifier, codeChallenge };
 };
 
-// const KEYCLOAK_BASE_URL = "http://localhost:8080/realms/spoutbreeze/";
-// const CLIENT_ID = "spoutbreezeAPI";
-// const REDIRECT_URI = "http://localhost:3000/auth/callback";
-
-console.log("KEYCLOAK_SERVER_URL", KEYCLOAK_SERVER_URL);
-console.log("KEYCLOAK_REALM", KEYCLOAK_REALM);
-console.log("KEYCLOAK_CLIENT_ID", KEYCLOAK_CLIENT_ID);
-console.log("KEYCLOAK_REDIRECT_URI", KEYCLOAK_REDIRECT_URI);
 
 export const getLoginUrl = async () => {
   // Initialize PKCE

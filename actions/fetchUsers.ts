@@ -1,4 +1,4 @@
-import axiosInstance from '@/lib/axios';
+import axiosInstance from "@/lib/axios";
 
 // User interface
 export interface User {

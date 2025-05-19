@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { createEvent, CreateEventReq } from "@/actions/events";
-import { ChannelWithUserName } from "@/actions/channels";
+import { ChannelWithUserName, fetchChannels } from "@/actions/channels";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -23,6 +23,7 @@ import timezone from "dayjs/plugin/timezone";
 
 import { User, fetchCurrentUser } from "@/actions/fetchUsers";
 import OrganizerSelector from "./OrganizerSelector";
+import NavigateBeforeRoundedIcon from "@mui/icons-material/NavigateBeforeRounded";
 
 // Configure dayjs to use UTC and timezone plugins
 dayjs.extend(utc);
@@ -32,7 +33,7 @@ dayjs.extend(timezone);
 const timezones = Intl.supportedValuesOf("timeZone").sort();
 
 interface EventFormProps {
-  channel: ChannelWithUserName;
+  channel?: ChannelWithUserName;
   onBack: () => void;
 }
 
@@ -40,12 +41,18 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
   // Detect user's timezone
   const detectedTimezone = dayjs.tz.guess();
 
+  // Add state for available channels
+  const [availableChannels, setAvailableChannels] = useState<
+    ChannelWithUserName[]
+  >([]);
+
   const [selectedTimezone, setSelectedTimezone] = useState(detectedTimezone);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
+  // Initialize formData based on whether channel is provided
   const [formData, setFormData] = useState<CreateEventReq>({
     title: "",
     description: "",
@@ -55,7 +62,7 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
     start_time: new Date(),
     timezone: detectedTimezone,
     organizer_ids: [],
-    channel_name: channel.name,
+    channel_name: channel ? channel.name : "", // Initialize with channel name or empty
   });
 
   // Fetch current user data
@@ -74,6 +81,23 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
 
     fetchUser();
   }, []);
+
+  // Fetch available channels if no channel is provided
+  React.useEffect(() => {
+    if (!channel) {
+      const loadChannels = async () => {
+        try {
+          const channelsResult = await fetchChannels();
+          setAvailableChannels(channelsResult.channels);
+        } catch (error) {
+          console.error("Error fetching channels:", error);
+          setError("Failed to load available channels.");
+        }
+      };
+
+      loadChannels();
+    }
+  }, [channel]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,19 +140,16 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
 
   return (
     <div className="w-[50%]">
-      <div className="flex items-center mb-6">
-        <Button
-          startIcon={<ArrowBackIcon />}
+      <h1 className="text-[18px] font-medium mb-6 -ml-1.5">
+        <NavigateBeforeRoundedIcon
           onClick={onBack}
-          variant="text"
-          color="inherit"
-        >
-          Back
-        </Button>
-      </div>
-
-      <h1 className="text-[22px] text-[#262262] font-semibold mb-6">
-        Create New Event for {channel.name}
+          sx={{
+            width: "25px",
+            height: "25px",
+            cursor: "pointer",
+          }}
+        />
+        {channel ? `Create New Event for ${channel.name}` : "Create New Event"}
       </h1>
 
       {success ? (
@@ -173,7 +194,10 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
               name="occurs"
               value={formData.occurs}
               label="Occurrence"
-              onChange={handleChange}
+              onChange={(e) => {
+                const { value } = e.target;
+                setFormData((prev) => ({ ...prev, occurs: value }));
+              }}
               sx={{ mb: "20px" }}
             >
               <MenuItem value="once">Once</MenuItem>
@@ -258,16 +282,39 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
             }}
           />
 
-          <TextField
-            label="Channel Name"
-            name="channel_name"
-            value={formData.channel_name}
-            required
-            fullWidth
-            variant="outlined"
-            disabled
-            sx={{ mb: "20px" }}
-          />
+          {/* Replace the channel name field with either a disabled field or dropdown */}
+          {channel ? (
+            <TextField
+              label="Channel Name"
+              name="channel_name"
+              value={formData.channel_name}
+              required
+              fullWidth
+              variant="outlined"
+              disabled
+              sx={{ mb: "20px" }}
+            />
+          ) : (
+            <FormControl fullWidth sx={{ mb: "20px" }}>
+              <InputLabel>Channel</InputLabel>
+              <Select
+                name="channel_name"
+                value={formData.channel_name}
+                label="Channel"
+                onChange={(e) => {
+                  const { value } = e.target;
+                  setFormData((prev) => ({ ...prev, channel_name: value }));
+                }}
+                required
+              >
+                {availableChannels.map((channel) => (
+                  <MenuItem key={channel.id} value={channel.name}>
+                    {channel.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           <div className="flex justify-end gap-4">
             <Button
