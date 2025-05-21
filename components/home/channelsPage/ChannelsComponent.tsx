@@ -15,6 +15,8 @@ import { fetchUserById } from "@/actions/fetchUsers";
 import Image from "next/image";
 import ChannelPage from "./ChannelPage";
 import AddChannelModal from "./AddChannelModal";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 const colorPalette = [
   "#27AAFF", // Light Blue
@@ -50,6 +52,31 @@ const ChannelsComponent: React.FC = () => {
     useState<ChannelWithUserName | null>(null);
   const [openModal, setOpenModal] = useState(false);
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("error");
+
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  const showSnackbar = (
+    message: string,
+    severity: "error" | "success" | "info" | "warning" = "error"
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   const handleOpenModal = () => {
     setOpenModal(true);
   };
@@ -80,6 +107,7 @@ const ChannelsComponent: React.FC = () => {
       } catch (error) {
         setError("Failed to fetch channels");
         setLoading(false);
+        showSnackbar("Failed to fetch channels", "error");
       }
     };
     fetchChannelsData();
@@ -105,8 +133,9 @@ const ChannelsComponent: React.FC = () => {
       );
       setChannelsData({ channels: channelsWithUserName, total: data.total });
       handleCloseModal();
+      showSnackbar("Channel created successfully", "success");
     } catch (error) {
-      setError("Failed to create channel");
+      showSnackbar("Failed to create channel", "error");
     }
   };
 
@@ -117,8 +146,9 @@ const ChannelsComponent: React.FC = () => {
         ...prev,
         channels: prev.channels.filter((channel) => channel.id !== id),
       }));
+      showSnackbar("Channel deleted successfully", "success");
     } catch (error) {
-      setError("Failed to delete channel");
+      showSnackbar("Failed to delete channel", "error");
     }
   };
 
@@ -193,6 +223,21 @@ const ChannelsComponent: React.FC = () => {
         onClose={handleCloseModal}
         onAdd={handleAddChannel}
       />
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={5000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </section>
   );
 };

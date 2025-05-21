@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { ChannelWithUserName } from "@/actions/channels";
 import Button from "@mui/material/Button";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -64,40 +64,41 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   } = useEventManagement();
 
   // Fetch events by channel ID
-  React.useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const data = await fetchEventsByChannelId(channelId);
-        // Check for specific status codes
-        if (data.statusCode === 404) {
-          setError("This channel doesn't have any upcoming events.");
-          setEventsData({ events: [], total: 0 });
-        } else if (data.statusCode === 500) {
-          setError(
-            "The server encountered an error while retrieving events. Please try again later."
-          );
-          setEventsData({ events: [], total: 0 });
-        } else {
-          // Success case
-          setEventsData({ events: data.events, total: data.total });
-        }
-      } catch (err) {
-        // Generic error handling
-        setError("Failed to load events. Please try again later.");
-        console.error("Error fetching events:", err);
-      } finally {
-        setLoading(false);
+  const fetchEvents = useCallback(async () => {
+    try {
+      const data = await fetchEventsByChannelId(channelId);
+      // Check for specific status codes
+      if (data.statusCode === 404) {
+        setError("This channel doesn't have any upcoming events.");
+        setEventsData({ events: [], total: 0 });
+      } else if (data.statusCode === 500) {
+        setError(
+          "The server encountered an error while retrieving events. Please try again later."
+        );
+        setEventsData({ events: [], total: 0 });
+      } else {
+        // Success case
+        setEventsData({ events: data.events, total: data.total });
       }
-    };
-
-    fetchEvents();
+    } catch (err) {
+      // Generic error handling
+      setError("Failed to load events. Please try again later.");
+      console.error("Error fetching events:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [channelId, showEventForm]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const handleCreateEvent = () => {
     setShowEventForm(true);
   };
 
   const handleBackToChannel = () => {
+    fetchEvents();
     setShowEventForm(false);
   };
 
