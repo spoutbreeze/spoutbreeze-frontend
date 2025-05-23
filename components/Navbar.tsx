@@ -21,6 +21,8 @@ import Typography from "@mui/material/Typography";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 
+import { logout } from "@/actions/logout";
+
 function stringAvatar(name: string) {
   return {
     sx: {
@@ -44,19 +46,41 @@ const Navbar: React.FC = () => {
   const searchParams = useSearchParams();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [logoutSuccess, setLogoutSuccess] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState("");
+  const [logoutStatusCode, setLogoutStatusCode] = useState<number | null>(null);
+
+  const handleLogoutClick = async () => {
+    setLogoutLoading(true);
+    setLogoutError(null);
+
+    try {
+      const response = await logout();
+
+      if (response.statusCode === 200) {
+        setLogoutSuccess(true);
+        setLogoutMessage(response.message);
+        // Redirect after successful logout
+        window.location.href = "/";
+      } else {
+        setLogoutError(response.message || "Logout failed");
+      }
+    } catch (error) {
+      setLogoutError("Failed to log out");
+      console.error("Logout error:", error);
+    } finally {
+      setLogoutLoading(false);
+      setAnchorEl(null); // Close the menu
+    }
+  };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    // handle logout logic here
-    // clearTokens();
-    // window.location.href = "/";
     setAnchorEl(null);
   };
 
@@ -201,7 +225,7 @@ const Navbar: React.FC = () => {
                 Settings
               </MenuItem>
               <MenuItem
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 disableGutters
                 dense
                 sx={{ pl: "14px", pt: "15px", pb: "15px" }}
