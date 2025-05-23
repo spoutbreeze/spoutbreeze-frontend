@@ -15,6 +15,8 @@ import CreateEvent from "@/components/home/events/CreateEvent";
 import EventList from "../events/EventList";
 import NavigateBeforeRoundedIcon from "@mui/icons-material/NavigateBeforeRounded";
 import { useEventManagement } from "@/hooks/useEventManagement";
+import CustomSnackbar from "@/components/common/CustomSnackbar";
+import { useSnackbar } from "@/hooks/useSnackbar";
 
 interface ChannelPageProps {
   channel: ChannelWithUserName;
@@ -53,6 +55,15 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
 
+  // Add snackbar hook
+  const {
+    snackbarOpen,
+    snackbarMessage,
+    snackbarSeverity,
+    showSnackbar,
+    closeSnackbar,
+  } = useSnackbar();
+
   // Use the custom hook instead of duplicating state and functions
   const {
     eventError,
@@ -66,6 +77,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   // Fetch events by channel ID
   const fetchEvents = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await fetchEventsByChannelId(channelId);
       // Check for specific status codes
       if (data.statusCode === 404) {
@@ -76,18 +88,21 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
           "The server encountered an error while retrieving events. Please try again later."
         );
         setEventsData({ events: [], total: 0 });
+        showSnackbar("Server error while retrieving events", "error");
       } else {
         // Success case
         setEventsData({ events: data.events, total: data.total });
+        setError(null);
       }
     } catch (err) {
       // Generic error handling
       setError("Failed to load events. Please try again later.");
+      showSnackbar("Failed to load events", "error");
       console.error("Error fetching events:", err);
     } finally {
       setLoading(false);
     }
-  }, [channelId, showEventForm]);
+  }, [channelId]);
 
   useEffect(() => {
     fetchEvents();
@@ -98,14 +113,31 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   };
 
   const handleBackToChannel = () => {
-    fetchEvents();
     setShowEventForm(false);
+  };
+
+  // Handle successful event creation
+  const handleEventCreated = async () => {
+    // Refresh the events list
+    await fetchEvents();
+    // Show success message
+    showSnackbar("Event created successfully!", "success");
+  };
+
+  // Handle event creation errors
+  const handleEventError = (message: string) => {
+    showSnackbar(message, "error");
   };
 
   if (showEventForm) {
     return (
       <section className="px-10 pt-10 h-screen overflow-y-auto">
-        <CreateEvent channel={channel} onBack={handleBackToChannel} />
+        <CreateEvent
+          channel={channel}
+          onBack={handleBackToChannel}
+          onEventCreated={handleEventCreated}
+          onError={handleEventError}
+        />
       </section>
     );
   }
@@ -115,7 +147,6 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
       {/* Channel header */}
       <div className="flex justify-between items-center">
         <div className="flex flex-col">
-          {/* <div> */}
           <button className="flex items-center font-medium text-[18px] -ml-1.5 mb-[5px]">
             <NavigateBeforeRoundedIcon
               onClick={onBack}
@@ -123,7 +154,6 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
             />
             {channel.name}
           </button>
-          {/* </div> */}
           <span className="font-medium text-[13px] text-[#5B5D60]">
             333 Sessions | 22 Recordings{" "}
             {/*change this later to make it dynamic*/}
@@ -165,6 +195,14 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
           Recordings
         </h1>
       </div>
+
+      {/* Custom Snackbar for notifications */}
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={closeSnackbar}
+      />
     </section>
   );
 };

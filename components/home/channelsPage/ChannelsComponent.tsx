@@ -15,9 +15,9 @@ import { fetchUserById } from "@/actions/fetchUsers";
 import Image from "next/image";
 import ChannelPage from "./ChannelPage";
 import AddChannelModal from "./AddChannelModal";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
+import CustomSnackbar from "@/components/common/CustomSnackbar";
+import { useSnackbar } from "@/hooks/useSnackbar";
 
 const colorPalette = [
   "#27AAFF", // Light Blue
@@ -52,32 +52,17 @@ const ChannelsComponent: React.FC = () => {
   const [selectedChannel, setSelectedChannel] =
     useState<ChannelWithUserName | null>(null);
   const [openModal, setOpenModal] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<
-    "success" | "error" | "info" | "warning"
-  >("error");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [channelToDelete, setChannelToDelete] = useState<string | null>(null);
 
-  const handleSnackbarClose = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setSnackbarOpen(false);
-  };
-
-  const showSnackbar = (
-    message: string,
-    severity: "error" | "success" | "info" | "warning" = "error"
-  ) => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setSnackbarOpen(true);
-  };
+  // Use the custom hook
+  const {
+    snackbarOpen,
+    snackbarMessage,
+    snackbarSeverity,
+    showSnackbar,
+    closeSnackbar,
+  } = useSnackbar();
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -246,21 +231,13 @@ const ChannelsComponent: React.FC = () => {
         onClose={handleCloseModal}
         onAdd={handleAddChannel}
       />
-
-      <Snackbar
+      {/* Snackbar for notifications */}
+      <CustomSnackbar
         open={snackbarOpen}
-        autoHideDuration={5000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={closeSnackbar}
+      />
     </section>
   );
 };

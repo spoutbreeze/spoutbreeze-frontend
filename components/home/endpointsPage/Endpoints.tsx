@@ -15,6 +15,8 @@ import { Box } from "@mui/material";
 import Image from "next/image";
 import AddEndpointModal from "./AddEndpointModal";
 import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
+import CustomSnackbar from "@/components/common/CustomSnackbar";
+import { useSnackbar } from "@/hooks/useSnackbar";
 
 export interface EndpointWithUserName extends StreamEndpoints {
   userName: string;
@@ -34,9 +36,18 @@ const Endpoints: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [endpointToDelete, setEndpointToDelete] = useState<string | null>(null);
 
+  const {
+    snackbarOpen,
+    snackbarMessage,
+    snackbarSeverity,
+    showSnackbar,
+    closeSnackbar,
+  } = useSnackbar();
+
   const handleOpenModal = () => {
     setOpenModal(true);
   };
+
   const handleCloseModal = () => {
     setOpenModal(false);
     setIsEditing(false);
@@ -45,13 +56,10 @@ const Endpoints: React.FC = () => {
 
   const handleAddEndpoint = async (formData: createStreamEndpointReq) => {
     try {
-      // Call the API to create the endpoint
       await createStreamEndpoint(formData);
 
-      // Refresh the list of endpoints
       const data = await fetchStreamEndpoints();
 
-      // Add user names to endpoints
       const endpointsWithUserName = await Promise.all(
         data.map(async (endpoint) => {
           const user = await fetchUserById(endpoint.user_id || "");
@@ -62,14 +70,12 @@ const Endpoints: React.FC = () => {
         })
       );
 
-      // Update state with new data
       setStreamEndpoints(endpointsWithUserName);
-
-      // Close the modal
       handleCloseModal();
+      showSnackbar("Endpoint created successfully", "success");
     } catch (error) {
       console.error("Error creating endpoint:", error);
-      setError("Failed to create endpoint");
+      showSnackbar("Failed to create endpoint", "error");
     }
   };
 
@@ -89,14 +95,15 @@ const Endpoints: React.FC = () => {
           })
         );
         setStreamEndpoints(endpointsWithUserName);
+        setLoading(false);
       } catch (error) {
         setError("Failed to fetch stream endpoints");
-      } finally {
+        showSnackbar("Failed to fetch stream endpoints", "error");
         setLoading(false);
       }
     };
     fetchStreamEndpointsData();
-  }, []);
+  }, [showSnackbar]);
 
   const confirmDeleteEndpoint = (id: string) => {
     setEndpointToDelete(id);
@@ -111,12 +118,12 @@ const Endpoints: React.FC = () => {
       setStreamEndpoints((prev) =>
         prev.filter((endpoint) => endpoint.id !== endpointToDelete)
       );
+      showSnackbar("Endpoint deleted successfully", "success");
     } catch (error) {
       console.error("Error deleting endpoint:", error);
-      setError("Failed to delete endpoint");
+      showSnackbar("Failed to delete endpoint", "error");
     } finally {
-      setDeleteDialogOpen(false);
-      setEndpointToDelete(null);
+      closeDeleteDialog();
     }
   };
 
@@ -131,18 +138,27 @@ const Endpoints: React.FC = () => {
   ) => {
     try {
       await updateStreamEndpoint(id, formData);
+
+      // Update the local state with user name preserved
       const updatedEndpoints = streamEndpoints.map((endpoint) =>
-        endpoint.id === id ? { ...endpoint, ...formData } : endpoint
+        endpoint.id === id
+          ? { ...endpoint, ...formData, userName: endpoint.userName }
+          : endpoint
       );
       setStreamEndpoints(updatedEndpoints);
+
+      handleCloseModal();
+      showSnackbar("Endpoint updated successfully", "success");
     } catch (error) {
       console.error("Error updating endpoint:", error);
-      setError("Failed to update endpoint");
+      showSnackbar("Failed to update endpoint", "error");
     }
   };
 
   const handleEditEndpoint = (id: string) => {
-    const endpointToEdit = streamEndpoints.find((endpoint) => endpoint.id === id);
+    const endpointToEdit = streamEndpoints.find(
+      (endpoint) => endpoint.id === id
+    );
     if (endpointToEdit) {
       setCurrentEndpoint(endpointToEdit);
       setIsEditing(true);
@@ -186,7 +202,7 @@ const Endpoints: React.FC = () => {
             </tr>
             {streamEndpoints.length === 0 && (
               <tr>
-                <td colSpan={3} className="text-center">
+                <td colSpan={4} className="text-center">
                   No stream endpoints available
                 </td>
               </tr>
@@ -221,7 +237,7 @@ const Endpoints: React.FC = () => {
           </tbody>
         </Table>
       )}
-      {/* The confirmation dialog */}
+
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         title="Delete Endpoint"
@@ -229,6 +245,7 @@ const Endpoints: React.FC = () => {
         onClose={closeDeleteDialog}
         onConfirm={handleDeleteEndpoint}
       />
+
       <AddEndpointModal
         open={openModal}
         onClose={handleCloseModal}
@@ -236,6 +253,13 @@ const Endpoints: React.FC = () => {
         onUpdate={handleUpdateEndpoint}
         isEditing={isEditing}
         currentEndpoint={currentEndpoint}
+      />
+
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={closeSnackbar}
       />
     </div>
   );

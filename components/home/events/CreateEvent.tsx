@@ -35,9 +35,16 @@ const timezones = Intl.supportedValuesOf("timeZone").sort();
 interface EventFormProps {
   channel?: ChannelWithUserName;
   onBack: () => void;
+  onEventCreated?: () => void;
+  onError?: (message: string) => void; // Add error callback
 }
 
-const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
+const CreateEvent: React.FC<EventFormProps> = ({
+  channel,
+  onBack,
+  onEventCreated,
+  onError,
+}) => {
   // Detect user's timezone
   const detectedTimezone = dayjs.tz.guess();
 
@@ -48,8 +55,6 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
 
   const [selectedTimezone, setSelectedTimezone] = useState(detectedTimezone);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   // Initialize formData based on whether channel is provided
@@ -68,19 +73,26 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
   // Fetch current user data
   React.useEffect(() => {
     const fetchUser = async () => {
-      const userData = await fetchCurrentUser();
-      setUser(userData);
+      try {
+        const userData = await fetchCurrentUser();
+        setUser(userData);
 
-      if (userData && userData.first_name) {
-        setFormData((prev) => ({
-          ...prev,
-          organizer_ids: [userData.id],
-        }));
+        if (userData && userData.first_name) {
+          setFormData((prev) => ({
+            ...prev,
+            organizer_ids: [userData.id],
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        if (onError) {
+          onError("Failed to load user data");
+        }
       }
     };
 
     fetchUser();
-  }, []);
+  }, [onError]);
 
   // Fetch available channels if no channel is provided
   React.useEffect(() => {
@@ -91,18 +103,19 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
           setAvailableChannels(channelsResult.channels);
         } catch (error) {
           console.error("Error fetching channels:", error);
-          setError("Failed to load available channels.");
+          if (onError) {
+            onError("Failed to load available channels");
+          }
         }
       };
 
       loadChannels();
     }
-  }, [channel]);
+  }, [channel, onError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       // Convert times to UTC using dayjs with the selected timezone
@@ -113,17 +126,23 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
 
       const eventData: CreateEventReq = {
         ...formData,
-        start_time: startTimeUTC, // Use UTC time for API
+        start_time: startTimeUTC,
       };
 
       await createEvent(eventData);
-      setSuccess(true);
-      setTimeout(() => {
-        onBack();
-      }, 2000);
+
+      // Call the callback to refresh events list
+      if (onEventCreated) {
+        onEventCreated();
+      }
+
+      // Navigate back immediately
+      onBack();
     } catch (err) {
-      setError("Failed to create event. Please try again.");
-      console.error(err);
+      console.error("Error creating event:", err);
+      if (onError) {
+        onError("Failed to create event. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -152,208 +171,195 @@ const CreateEvent: React.FC<EventFormProps> = ({ channel, onBack }) => {
         {channel ? `Create New Event for ${channel.name}` : "Create New Event"}
       </h1>
 
-      {success ? (
-        <div className="bg-green-100 p-4 rounded mb-6">
-          Event created successfully! Redirecting...
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-100 p-4 rounded mb-4 text-red-700">
-              {error}
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <TextField
+          label="Event Title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          required
+          fullWidth
+          variant="outlined"
+          sx={{ mb: "20px" }}
+        />
 
-          <TextField
-            label="Event Title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            fullWidth
-            variant="outlined"
+        <TextField
+          label="Description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          fullWidth
+          multiline
+          rows={4}
+          variant="outlined"
+          sx={{ mb: "20px" }}
+        />
+
+        <FormControl fullWidth>
+          <InputLabel>Occurrence</InputLabel>
+          <Select
+            name="occurs"
+            value={formData.occurs}
+            label="Occurrence"
+            onChange={(e) => {
+              const { value } = e.target;
+              setFormData((prev) => ({ ...prev, occurs: value }));
+            }}
             sx={{ mb: "20px" }}
-          />
+          >
+            <MenuItem value="once">Once</MenuItem>
+            <MenuItem value="daily">Daily</MenuItem>
+            <MenuItem value="weekly">Weekly</MenuItem>
+            <MenuItem value="monthly">Monthly</MenuItem>
+          </Select>
+        </FormControl>
 
-          <TextField
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            fullWidth
-            multiline
-            rows={4}
-            variant="outlined"
-            sx={{ mb: "20px" }}
-          />
-
-          <FormControl fullWidth>
-            <InputLabel>Occurrence</InputLabel>
-            <Select
-              name="occurs"
-              value={formData.occurs}
-              label="Occurrence"
-              onChange={(e) => {
-                const { value } = e.target;
-                setFormData((prev) => ({ ...prev, occurs: value }));
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Start Date"
+              value={formData.start_date}
+              onChange={(date) => {
+                if (date)
+                  setFormData((prev) => ({ ...prev, start_date: date }));
               }}
-              sx={{ mb: "20px" }}
-            >
-              <MenuItem value="once">Once</MenuItem>
-              <MenuItem value="daily">Daily</MenuItem>
-              <MenuItem value="weekly">Weekly</MenuItem>
-              <MenuItem value="monthly">Monthly</MenuItem>
-            </Select>
-          </FormControl>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Start Date"
-                value={formData.start_date}
-                onChange={(date) => {
-                  if (date)
-                    setFormData((prev) => ({ ...prev, start_date: date }));
-                }}
-              />
-            </LocalizationProvider>
-
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="End Date"
-                value={formData.end_date}
-                onChange={(date) => {
-                  if (date)
-                    setFormData((prev) => ({ ...prev, end_date: date }));
-                }}
-                minDate={formData.start_date}
-              />
-            </LocalizationProvider>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <TimePicker
-                label="Start Time"
-                value={formData.start_time}
-                onChange={(time) => {
-                  if (time)
-                    setFormData((prev) => ({ ...prev, start_time: time }));
-                }}
-              />
-            </LocalizationProvider>
-
-            <Autocomplete
-              options={timezones}
-              value={selectedTimezone}
-              onChange={(_, newValue) => {
-                if (newValue) setSelectedTimezone(newValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Timezone"
-                  helperText="Select your timezone"
-                  fullWidth
-                />
-              )}
             />
-          </div>
+          </LocalizationProvider>
 
-          {/* organizers */}
-          <OrganizerSelector
-            organizer_ids={formData.organizer_ids} // Array of user IDs
-            currentUser={user}
-            onAddOrganizer={(newOrganizerId) => {
-              setFormData((prev) => ({
-                ...prev,
-                organizer_ids: [...prev.organizer_ids, newOrganizerId],
-              }));
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="End Date"
+              value={formData.end_date}
+              onChange={(date) => {
+                if (date) setFormData((prev) => ({ ...prev, end_date: date }));
+              }}
+              minDate={formData.start_date}
+            />
+          </LocalizationProvider>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <TimePicker
+              label="Start Time"
+              value={formData.start_time}
+              onChange={(time) => {
+                if (time)
+                  setFormData((prev) => ({ ...prev, start_time: time }));
+              }}
+            />
+          </LocalizationProvider>
+
+          <Autocomplete
+            options={timezones}
+            value={selectedTimezone}
+            onChange={(_, newValue) => {
+              if (newValue) setSelectedTimezone(newValue);
             }}
-            onRemoveOrganizer={(organizerId) => {
-              const newOrganizers = formData.organizer_ids.filter(
-                (id) => id !== organizerId
-              );
-              setFormData((prev) => ({
-                ...prev,
-                organizer_ids: newOrganizers,
-              }));
-            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Timezone"
+                helperText="Select your timezone"
+                fullWidth
+              />
+            )}
           />
+        </div>
 
-          {/* Replace the channel name field with either a disabled field or dropdown */}
-          {channel ? (
-            <TextField
-              label="Channel Name"
+        {/* organizers */}
+        <OrganizerSelector
+          organizer_ids={formData.organizer_ids}
+          currentUser={user}
+          onAddOrganizer={(newOrganizerId) => {
+            setFormData((prev) => ({
+              ...prev,
+              organizer_ids: [...prev.organizer_ids, newOrganizerId],
+            }));
+          }}
+          onRemoveOrganizer={(organizerId) => {
+            const newOrganizers = formData.organizer_ids.filter(
+              (id) => id !== organizerId
+            );
+            setFormData((prev) => ({
+              ...prev,
+              organizer_ids: newOrganizers,
+            }));
+          }}
+        />
+
+        {/* Replace the channel name field with either a disabled field or dropdown */}
+        {channel ? (
+          <TextField
+            label="Channel Name"
+            name="channel_name"
+            value={formData.channel_name}
+            required
+            fullWidth
+            variant="outlined"
+            disabled
+            sx={{ mb: "20px" }}
+          />
+        ) : (
+          <FormControl fullWidth sx={{ mb: "20px" }}>
+            <InputLabel>Channel</InputLabel>
+            <Select
               name="channel_name"
               value={formData.channel_name}
+              label="Channel"
+              onChange={(e) => {
+                const { value } = e.target;
+                setFormData((prev) => ({ ...prev, channel_name: value }));
+              }}
               required
-              fullWidth
-              variant="outlined"
-              disabled
-              sx={{ mb: "20px" }}
-            />
-          ) : (
-            <FormControl fullWidth sx={{ mb: "20px" }}>
-              <InputLabel>Channel</InputLabel>
-              <Select
-                name="channel_name"
-                value={formData.channel_name}
-                label="Channel"
-                onChange={(e) => {
-                  const { value } = e.target;
-                  setFormData((prev) => ({ ...prev, channel_name: value }));
-                }}
-                required
-              >
-                {availableChannels.map((channel) => (
-                  <MenuItem key={channel.id} value={channel.name}>
-                    {channel.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+            >
+              {availableChannels.map((channel) => (
+                <MenuItem key={channel.id} value={channel.name}>
+                  {channel.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="contained"
-              onClick={onBack}
-              sx={{
-                padding: "10px",
-                fontSize: "14px",
-                fontWeight: 500,
-                textTransform: "none",
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="contained"
+            onClick={onBack}
+            sx={{
+              padding: "10px",
+              fontSize: "14px",
+              fontWeight: 500,
+              textTransform: "none",
+              backgroundColor: "#CCCCCC",
+              boxShadow: "none",
+              "&:hover": {
                 backgroundColor: "#CCCCCC",
                 boxShadow: "none",
-                "&:hover": {
-                  backgroundColor: "#CCCCCC",
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="outlined"
-              sx={{
-                padding: "10px",
-                fontSize: "14px",
-                fontWeight: 500,
-                textTransform: "none",
-                color: "#27AAFF",
-                borderColor: "#27AAFF",
-              }}
-              disabled={loading}
-            >
-              {loading ? "Creating..." : "Create Event"}
-            </Button>
-          </div>
-        </form>
-      )}
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="outlined"
+            sx={{
+              padding: "10px",
+              fontSize: "14px",
+              fontWeight: 500,
+              textTransform: "none",
+              color: "#27AAFF",
+              borderColor: "#27AAFF",
+            }}
+            disabled={loading}
+          >
+            {loading ? "Creating..." : "Create Event"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

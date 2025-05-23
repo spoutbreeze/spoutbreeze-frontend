@@ -9,6 +9,8 @@ import { Events, fetchEvents } from "@/actions/events";
 import { eventMenuItems } from "../channelsPage/ChannelPage";
 import { useEventManagement } from "@/hooks/useEventManagement";
 import CreateEvent from "@/components/home/events/CreateEvent";
+import CustomSnackbar from "@/components/common/CustomSnackbar";
+import { useSnackbar } from "@/hooks/useSnackbar";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,6 +51,15 @@ const Dashboard: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
 
+  // Add snackbar hook for success messages
+  const {
+    snackbarOpen,
+    snackbarMessage,
+    snackbarSeverity,
+    showSnackbar,
+    closeSnackbar,
+  } = useSnackbar();
+
   // Use the custom hook instead of duplicating state and functions
   const {
     eventError,
@@ -61,15 +72,18 @@ const Dashboard: React.FC = () => {
 
   const fetchEventsData = async () => {
     try {
+      setLoading(true);
       const data = await fetchEvents();
       setEventsData(data);
-      setLoading(false);
+      setError(null);
     } catch (error) {
       setError("Failed to fetch events. Please try again.");
       console.error("Error fetching events:", error);
+    } finally {
       setLoading(false);
     }
   };
+
   React.useEffect(() => {
     fetchEventsData();
   }, []);
@@ -86,12 +100,28 @@ const Dashboard: React.FC = () => {
     setShowEventForm(false);
   };
 
+  // Handle successful event creation
+  const handleEventCreated = async () => {
+    // Refresh the events list
+    await fetchEventsData();
+    // Show success message
+    showSnackbar("Event created successfully!", "success");
+  };
+
+  // Handle event creation errors
+  const handleEventError = (message: string) => {
+    showSnackbar(message, "error");
+  };
+
   // Fix the issue with showing the CreateEvent form from Dashboard
   if (showEventForm) {
     return (
       <section className="px-10 pt-10 h-screen overflow-y-auto">
-        <CreateEvent onBack={handleBackToChannel} />
-        {/* Note: no channel prop is passed */}
+        <CreateEvent
+          onBack={handleBackToChannel}
+          onEventCreated={handleEventCreated}
+          onError={handleEventError}
+        />
       </section>
     );
   }
@@ -181,6 +211,14 @@ const Dashboard: React.FC = () => {
           <PastEventList />
         </CustomTabPanel>
       </div>
+
+      {/* Add snackbar for success messages */}
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={closeSnackbar}
+      />
     </section>
   );
 };
