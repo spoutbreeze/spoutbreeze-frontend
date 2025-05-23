@@ -17,6 +17,7 @@ import ChannelPage from "./ChannelPage";
 import AddChannelModal from "./AddChannelModal";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
 
 const colorPalette = [
   "#27AAFF", // Light Blue
@@ -51,12 +52,13 @@ const ChannelsComponent: React.FC = () => {
   const [selectedChannel, setSelectedChannel] =
     useState<ChannelWithUserName | null>(null);
   const [openModal, setOpenModal] = useState(false);
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<
     "success" | "error" | "info" | "warning"
   >("error");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [channelToDelete, setChannelToDelete] = useState<string | null>(null);
 
   const handleSnackbarClose = (
     event?: React.SyntheticEvent | Event,
@@ -139,17 +141,33 @@ const ChannelsComponent: React.FC = () => {
     }
   };
 
-  const handleDeleteChannel = async (id: string) => {
+  const confirmDeleteChannel = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setChannelToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!channelToDelete) return;
+
     try {
-      await deleteChannel(id);
+      await deleteChannel(channelToDelete);
       setChannelsData((prev) => ({
         ...prev,
-        channels: prev.channels.filter((channel) => channel.id !== id),
+        channels: prev.channels.filter((channel) => channel.id !== channelToDelete),
       }));
       showSnackbar("Channel deleted successfully", "success");
     } catch (error) {
       showSnackbar("Failed to delete channel", "error");
+    } finally {
+      closeDeleteDialog();
+      setChannelToDelete(null);
     }
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setChannelToDelete(null);
   };
 
   const handleChannelClick = (channel: ChannelWithUserName) => {
@@ -207,10 +225,7 @@ const ChannelsComponent: React.FC = () => {
                     width={15}
                     height={16}
                     className="cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteChannel(channel.id);
-                    }}
+                    onClick={(e) => confirmDeleteChannel(channel.id, e)}
                   />
                 </div>
               </div>
@@ -218,6 +233,14 @@ const ChannelsComponent: React.FC = () => {
           ))}
         </div>
       )}
+      {/* The confirmation dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        title="Delete Channel"
+        message="Are you sure you want to delete this channel? This action cannot be undone."
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteChannel}
+      />
       <AddChannelModal
         open={openModal}
         onClose={handleCloseModal}

@@ -14,6 +14,7 @@ import Table from "@mui/joy/Table";
 import { Box } from "@mui/material";
 import Image from "next/image";
 import AddEndpointModal from "./AddEndpointModal";
+import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
 
 export interface EndpointWithUserName extends StreamEndpoints {
   userName: string;
@@ -26,10 +27,12 @@ const Endpoints: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [openModal, setOpenModal] = React.useState(false);
-  
   const [isEditing, setIsEditing] = useState(false);
   const [currentEndpoint, setCurrentEndpoint] =
     useState<EndpointWithUserName | null>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [endpointToDelete, setEndpointToDelete] = useState<string | null>(null);
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -95,16 +98,31 @@ const Endpoints: React.FC = () => {
     fetchStreamEndpointsData();
   }, []);
 
-  const handleDeleteEndpoint = async (id: string) => {
+  const confirmDeleteEndpoint = (id: string) => {
+    setEndpointToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteEndpoint = async () => {
+    if (!endpointToDelete) return;
+
     try {
-      await deleteStreamEndpoint(id);
+      await deleteStreamEndpoint(endpointToDelete);
       setStreamEndpoints((prev) =>
-        prev.filter((endpoint) => endpoint.id !== id)
+        prev.filter((endpoint) => endpoint.id !== endpointToDelete)
       );
     } catch (error) {
       console.error("Error deleting endpoint:", error);
       setError("Failed to delete endpoint");
+    } finally {
+      setDeleteDialogOpen(false);
+      setEndpointToDelete(null);
     }
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setEndpointToDelete(null);
   };
 
   const handleUpdateEndpoint = async (
@@ -186,7 +204,7 @@ const Endpoints: React.FC = () => {
                       width={20}
                       height={20}
                       className="cursor-pointer mr-5"
-                      onClick={() => handleDeleteEndpoint(endpoint.id)}
+                      onClick={() => confirmDeleteEndpoint(endpoint.id)}
                     />
                     <Image
                       src="/edit_icon_outlined.svg"
@@ -203,6 +221,14 @@ const Endpoints: React.FC = () => {
           </tbody>
         </Table>
       )}
+      {/* The confirmation dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        title="Delete Endpoint"
+        message="Are you sure you want to delete this endpoint? This action cannot be undone."
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteEndpoint}
+      />
       <AddEndpointModal
         open={openModal}
         onClose={handleCloseModal}
