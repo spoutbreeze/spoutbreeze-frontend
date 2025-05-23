@@ -37,12 +37,10 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
     const loadSelectedUsers = async () => {
       const users = await fetchUsers();
       // Filter users whose IDs are in organizers array
-      const selected = users.filter(user => 
-        organizer_ids.includes(user.id)
-      );
+      const selected = users.filter((user) => organizer_ids.includes(user.id));
       setSelectedUsers(selected);
     };
-    
+
     loadSelectedUsers();
   }, [organizer_ids]);
 
@@ -61,7 +59,6 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
     }
   }, [open, organizer_ids]);
 
-
   return (
     <div className="mb-6">
       <p className="text-sm font-medium mb-2">Organizers</p>
@@ -77,7 +74,7 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
                   ),
                 }}
               >
-                <span style={{ color: "white" }}>
+                <span className="text-white">
                   {currentUser.first_name[0]}
                   {currentUser.last_name[0]}
                 </span>
@@ -85,26 +82,26 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
             }
             label={`${currentUser.first_name} ${currentUser.last_name}`}
             sx={{
-              borderRadius: "8px",
-              backgroundColor: "white",
-              border: "1px solid #e0e0e0",
-              "& .MuiChip-label": {
-                paddingLeft: "8px",
-              },
+              borderRadius: "17px",
+              backgroundColor: "#F6F6F6",
             }}
           />
         )}
 
         {/* Other organizers */}
         {selectedUsers
-          .filter((user) =>
-            currentUser ? user.id !== currentUser.id : true
-          )
+          .filter((user) => (currentUser ? user.id !== currentUser.id : true))
           .map((user) => (
             <Chip
               key={user.id}
               avatar={
-                <Avatar sx={{ bgcolor: stringToColor(`${user.first_name} ${user.last_name}`) }}>
+                <Avatar
+                  sx={{
+                    bgcolor: stringToColor(
+                      `${user.first_name} ${user.last_name}`
+                    ),
+                  }}
+                >
                   <span style={{ color: "white" }}>
                     {user.first_name[0]}
                     {user.last_name[0]}
@@ -114,25 +111,22 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
               label={`${user.first_name} ${user.last_name}`}
               onDelete={() => onRemoveOrganizer(user.id)}
               sx={{
-                borderRadius: "8px",
-                backgroundColor: "white",
-                border: "1px solid #e0e0e0",
-                "& .MuiChip-label": {
-                  paddingLeft: "8px",
-                },
+                borderRadius: "17px",
+                backgroundColor: "#F6F6F6",
               }}
             />
           ))}
 
         {/* Add organizer button */}
         <Chip
-          icon={<AddIcon />}
+          icon={
+            <AddIcon sx={{ backgroundColor: "#FFFFFF", borderRadius: "50px" }} />
+          }
           label="Add organizer"
           onClick={() => setOpen(true)}
           sx={{
-            borderRadius: "8px",
-            backgroundColor: "white",
-            border: "1px solid #e0e0e0",
+            borderRadius: "17px",
+            backgroundColor: "#F6F6F6",
             cursor: "pointer",
             "&:hover": {
               backgroundColor: "#f5f5f5",
@@ -157,7 +151,7 @@ const OrganizerSelector: React.FC<OrganizerSelectorProps> = ({
                     onAddOrganizer(user.id);
                     setOpen(false);
                   }}
-                  sx={{ cursor: 'pointer' }}
+                  sx={{ cursor: "pointer" }}
                 >
                   <ListItemAvatar>
                     <Avatar
