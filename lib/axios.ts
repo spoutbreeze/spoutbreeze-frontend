@@ -9,7 +9,7 @@ const headers = {
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8000',
   headers,
-  withCredentials: true, // optional depending on your backend
+  withCredentials: true, // optional depending on the backend
 })
 
 // Add access token to each request
@@ -30,12 +30,13 @@ axiosInstance.interceptors.response.use(
 
       if (newToken) {
         error.config.headers.Authorization = `Bearer ${newToken}`
-        return axios(error.config) // Retry the original request
+        return axiosInstance(error.config) // Use axiosInstance instead of axios
       } else {
         clearTokens()
         const returnUrl = window.location.pathname
-        window.location.href = `${getLoginUrl()}&redirect_uri=${encodeURIComponent(window.location.origin + returnUrl)}`
-        return // stop further execution
+        const loginUrl = await getLoginUrl() // Await the async function
+        window.location.href = `${loginUrl}&redirect_uri=${encodeURIComponent(window.location.origin + returnUrl)}`
+        return Promise.reject(error) // Return rejected promise instead of just return
       }
     }
     return Promise.reject(error)

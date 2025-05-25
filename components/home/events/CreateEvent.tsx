@@ -56,6 +56,7 @@ const CreateEvent: React.FC<EventFormProps> = ({
   const [selectedTimezone, setSelectedTimezone] = useState(detectedTimezone);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null); // State for title error
 
   // Initialize formData based on whether channel is provided
   const [formData, setFormData] = useState<CreateEventReq>({
@@ -115,6 +116,25 @@ const CreateEvent: React.FC<EventFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Clear any previous title errors
+    setTitleError(null);
+
+    // Basic validation
+    if (!formData.title.trim()) {
+      if (onError) {
+        onError("Event title is required.");
+      }
+      return;
+    }
+
+    if (formData.title.length < 3) {
+      if (onError) {
+        onError("Event title must be at least 3 characters long.");
+      }
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -140,8 +160,31 @@ const CreateEvent: React.FC<EventFormProps> = ({
       onBack();
     } catch (err) {
       console.error("Error creating event:", err);
-      if (onError) {
-        onError("Failed to create event. Please try again.");
+      if (err instanceof Error) {
+        if (err.message === "DUPLICATE_TITLE") {
+          setTitleError("This title is already taken");
+          if (onError) {
+            onError(
+              "An event with this title already exists. Please choose a different title."
+            );
+          }
+        } else if (err.message === "VALIDATION_ERROR") {
+          if (onError) {
+            onError("Please check your input data and try again.");
+          }
+        } else if (err.message === "SERVER_ERROR") {
+          if (onError) {
+            onError("Server error occurred. Please try again later.");
+          }
+        } else {
+          if (onError) {
+            onError("Failed to create event. Please try again.");
+          }
+        }
+      } else {
+        if (onError) {
+          onError("An unexpected error occurred.");
+        }
       }
     } finally {
       setLoading(false);
@@ -181,6 +224,8 @@ const CreateEvent: React.FC<EventFormProps> = ({
           fullWidth
           variant="outlined"
           sx={{ mb: "20px" }}
+          error={!!titleError} // Show error state if titleError is not null
+          helperText={titleError} // Display the error message
         />
 
         <TextField

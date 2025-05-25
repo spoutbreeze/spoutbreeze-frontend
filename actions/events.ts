@@ -20,17 +20,21 @@ export interface Event {
   creator_id: string;
   organizers: Organizers[];
   channel_id: string;
-  meeting_id: string;
-  moderator_pw: string;
-  attendee_pw: string;
+  meeting_id: string | null;
+  moderator_pw: string | null;
+  attendee_pw: string | null;
+  meeting_created: boolean;
+  timezone: string;
   created_at: string;
   updated_at: string;
+  status: "scheduled" | "live" | "ended" | "cancelled"; // Add status field
+  actual_start_time: string | null; // Add actual_start_time
+  actual_end_time: string | null; // Add actual_end_time
 }
 
 export interface Events {
   events: Event[];
   total: number;
-  statusCode?: number;
 }
 
 export interface CreateEventReq {
@@ -55,65 +59,137 @@ export const fetchEvents = async (): Promise<Events> => {
     const response = await axiosInstance.get("/api/events/all");
     return response.data;
   } catch (error) {
-    console.error("Error fetching events:", error);
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      
+      if (status === 404) {
+        return { events: [], total: 0 };
+      }
+      
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
     throw error;
   }
 };
 
-export const fetchEventsByChannelId = async (
-  channelId: string
-): Promise<Events> => {
+export const fetchEventsByChannelId = async (channelId: string): Promise<Events> => {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) {
       return { events: [], total: 0 };
     }
 
-    try {
-      const response = await axiosInstance.get(
-        `/api/events/channel/${channelId}`
-      );
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // Handle specific status codes
-        if (error.response) {
-          const status = error.response.status;
-
-          if (status === 404) {
-            // Return empty events with a specific error flag
-            return { events: [], total: 0, statusCode: 404 };
-          }
-
-          if (status === 500) {
-            // Return empty events with a specific error flag
-            return { events: [], total: 0, statusCode: 500 };
-          }
-
-          // For other error statuses
-          throw new Error(
-            `API Error: ${error.response.status} - ${error.response.statusText}`
-          );
-        }
-      }
-      throw error; // Re-throw for other errors
-    }
+    const response = await axiosInstance.get(`/api/events/channel/${channelId}`);
+    return response.data;
   } catch (error) {
-    console.error("Error fetching events by channel ID:", error);
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      
+      if (status === 404) {
+        return { events: [], total: 0 };
+      }
+      
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
     throw error;
   }
 };
 
-export const createEvent = async (data: CreateEventReq): Promise<Event> => {
+export const fetchUpcmingEvents = async (): Promise<Events> => {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      return {} as Event;
+      return { events: [], total: 0 };
     }
+
+    const response = await axiosInstance.get("/api/events/upcoming");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      
+      if (status === 404) {
+        return { events: [], total: 0 };
+      }
+      
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+};
+
+export const fetchPastEvents = async (): Promise<Events> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return { events: [], total: 0 };
+    }
+
+    const response = await axiosInstance.get("/api/events/past");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      
+      if (status === 404) {
+        return { events: [], total: 0 };
+      }
+      
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+};
+
+export const createEvent = async (data: CreateEventReq): Promise<Event | null> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    
     const response = await axiosInstance.post("/api/events/", data);
     return response.data;
   } catch (error) {
-    console.error("Error creating event:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Response:", error.response?.data);
+      console.error("API Error Status:", error.response?.status);
+      
+      // Handle specific backend errors
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.detail || "";
+        
+        // Check for duplicate title error
+        if (errorMessage.includes("already exists")) {
+          throw new Error("DUPLICATE_TITLE");
+        }
+        
+        throw new Error("VALIDATION_ERROR");
+      }
+      
+      if (error.response?.status === 422) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.detail || "";
+        
+        if (errorMessage.includes("duplicate key value violates unique constraint") && 
+            errorMessage.includes("events_title_key")) {
+          throw new Error("DUPLICATE_TITLE");
+        }
+        
+        throw new Error("SERVER_ERROR");
+      }
+    }
     throw error;
   }
 };

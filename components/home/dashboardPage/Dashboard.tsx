@@ -3,14 +3,12 @@ import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Button from "@mui/material/Button";
-import EventList from "../events/EventList";
 import PastEventList from "./PastEventList";
-import { Events, fetchEvents } from "@/actions/events";
-import { eventMenuItems } from "../channelsPage/ChannelPage";
-import { useEventManagement } from "@/hooks/useEventManagement";
+import { fetchUpcmingEvents } from "@/actions/events";
 import CreateEvent from "@/components/home/events/CreateEvent";
 import CustomSnackbar from "@/components/common/CustomSnackbar";
 import { useSnackbar } from "@/hooks/useSnackbar";
+import EventsTab from "./EventsTab";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -43,13 +41,9 @@ function a11yProps(index: number) {
 
 const Dashboard: React.FC = () => {
   const [value, setValue] = React.useState(0);
-  const [eventsData, setEventsData] = React.useState<Events>({
-    events: [],
-    total: 0,
-  });
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
+
+  let refreshUpcomingEvents: (() => void) | null = null; // ✅ Store the refresh function
 
   // Add snackbar hook for success messages
   const {
@@ -59,34 +53,6 @@ const Dashboard: React.FC = () => {
     showSnackbar,
     closeSnackbar,
   } = useSnackbar();
-
-  // Use the custom hook instead of duplicating state and functions
-  const {
-    eventError,
-    menuState,
-    open,
-    handleClick,
-    handleClose,
-    handleStartEvent,
-  } = useEventManagement();
-
-  const fetchEventsData = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchEvents();
-      setEventsData(data);
-      setError(null);
-    } catch (error) {
-      setError("Failed to fetch events. Please try again.");
-      console.error("Error fetching events:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchEventsData();
-  }, []);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -102,9 +68,10 @@ const Dashboard: React.FC = () => {
 
   // Handle successful event creation
   const handleEventCreated = async () => {
-    // Refresh the events list
-    await fetchEventsData();
-    // Show success message
+    setShowEventForm(false);
+    if (refreshUpcomingEvents) {
+      await refreshUpcomingEvents();
+    }
     showSnackbar("Event created successfully!", "success");
   };
 
@@ -113,7 +80,6 @@ const Dashboard: React.FC = () => {
     showSnackbar(message, "error");
   };
 
-  // Fix the issue with showing the CreateEvent form from Dashboard
   if (showEventForm) {
     return (
       <section className="px-10 pt-10 h-screen overflow-y-auto">
@@ -196,15 +162,11 @@ const Dashboard: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto">
         <CustomTabPanel value={value} index={0}>
-          <EventList
-            loading={loading}
-            error={error}
-            eventsData={eventsData}
-            eventMenuItems={eventMenuItems}
-            handleClick={handleClick}
-            handleClose={handleClose}
-            menuState={menuState}
-            handleStartEvent={handleStartEvent}
+          <EventsTab
+            fetchFunction={fetchUpcmingEvents}
+            onRefresh={(refreshFn) => {
+              refreshUpcomingEvents = refreshFn;
+            }}
           />
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>

@@ -103,7 +103,7 @@ const Endpoints: React.FC = () => {
       }
     };
     fetchStreamEndpointsData();
-  }, [showSnackbar]);
+  }, []);
 
   const confirmDeleteEndpoint = (id: string) => {
     setEndpointToDelete(id);

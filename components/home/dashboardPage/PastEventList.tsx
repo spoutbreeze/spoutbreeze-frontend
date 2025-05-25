@@ -1,9 +1,9 @@
+import React from "react";
+import EventsTab from "./EventsTab";
+import { fetchPastEvents } from "@/actions/events";
+
 const PastEventList: React.FC = () => {
-    return (
-        <div>
-            <h1>Past events</h1>
-        </div>
-    )
-}
+  return <EventsTab fetchFunction={fetchPastEvents} />;
+};
 
 export default PastEventList;

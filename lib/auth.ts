@@ -77,6 +77,9 @@ export const clearTokens = () => {
 
 export const refreshToken = async () => {
   const refresh_token = localStorage.getItem("refresh_token");
+  
+  console.log("Refresh token from storage:", refresh_token ? "exists" : "missing"); // Debug log
+  
   if (!refresh_token) return null;
 
   try {
@@ -86,12 +89,38 @@ export const refreshToken = async () => {
       body: JSON.stringify({ refresh_token }),
     });
 
-    if (!response.ok) throw new Error("Failed to refresh token");
+    // Log the response details for debugging
+    console.log("Refresh response status:", response.status);
+    
+    if (!response.ok) {
+      // Get the error details from the response
+      const errorData = await response.text();
+      console.error("Refresh failed with status:", response.status);
+      console.error("Error details:", errorData);
+      
+      // If it's a 401, the refresh token is invalid/expired
+      if (response.status === 401) {
+        console.log("Refresh token expired or invalid - clearing tokens");
+        clearTokens();
+        return null;
+      }
+      
+      throw new Error(`Failed to refresh token: ${response.status}`);
+    }
 
     const data = await response.json();
-    setTokens(data.access_token, data.refresh_token);
-    return data.access_token;
+    console.log("Refresh response:", data); // Debug log
+    
+    if (data.access_token) {
+      // Update tokens (refresh_token might be rotated)
+      const newRefreshToken = data.refresh_token || refresh_token;
+      setTokens(data.access_token, newRefreshToken);
+      return data.access_token;
+    } else {
+      throw new Error("No access token in refresh response");
+    }
   } catch (error) {
+    console.error("Refresh token error:", error);
     clearTokens();
     return null;
   }
