@@ -1,9 +1,8 @@
 import Navbar from "@/components/Navbar";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import ClientThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
-// import { AuthProvider } from "./providers";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -25,12 +24,12 @@ export default function RootLayout({
         <title>SpoutBreeze</title>
       </head>
       <body className={`${montserrat.className} flex flex-col min-h-screen mx-auto max-w-screen-container`}>
-        <AppRouterCacheProvider>
+        <ClientThemeProvider>
           <nav>
             <Navbar />
           </nav>
           <main className="pt-[80px]">{children}</main>
-        </AppRouterCacheProvider>
+        </ClientThemeProvider>
       </body>
     </html>
   );

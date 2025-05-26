@@ -84,6 +84,11 @@ const Navbar: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const handleSettingsClick = () => {
+    router.push("/settings");
+    setAnchorEl(null);
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       // Check if user is authenticated
@@ -214,7 +219,7 @@ const Navbar: React.FC = () => {
 
               {/* Menu options */}
               <MenuItem
-                onClick={handleClose}
+                onClick={handleSettingsClick}
                 disableGutters
                 dense
                 sx={{ pl: "14px", pt: "15px", pb: "15px" }}
