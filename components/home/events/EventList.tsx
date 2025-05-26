@@ -25,6 +25,7 @@ interface EventListProps {
   };
   handleStartEvent: (eventId: string) => void;
   handleDeleteEvent: (eventId: string) => void;
+  handleEditEvent: (eventId: string) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({
@@ -37,6 +38,7 @@ const EventList: React.FC<EventListProps> = ({
   menuState,
   handleStartEvent,
   handleDeleteEvent,
+  handleEditEvent,
 }) => {
   const open = Boolean(menuState.anchorEl);
   
@@ -173,6 +175,10 @@ const EventList: React.FC<EventListProps> = ({
                           } else if (item.key === "delete") {
                             if (menuState.eventId) {
                               handleDeleteEvent(menuState.eventId);
+                            }
+                          } else if (item.key === "edit") {
+                            if (menuState.eventId) {
+                              handleEditEvent(menuState.eventId);
                             }
                           }
                           handleClose();

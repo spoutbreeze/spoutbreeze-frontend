@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { startEvent, deleteEvent } from '@/actions/events';
+import { startEvent, deleteEvent, updateEvent, CreateEventReq } from '@/actions/events';
 
 interface UseEventManagementOptions {
   onDeleteSuccess?: () => void;
   onDeleteError?: (message: string) => void;
   onStartSuccess?: () => void;
   onStartError?: (message: string) => void;
+  onUpdateSuccess?: () => void;
+  onUpdateError?: (message: string) => void;
 }
 
 export const useEventManagement = (options?: UseEventManagementOptions) => {
@@ -33,6 +35,33 @@ export const useEventManagement = (options?: UseEventManagementOptions) => {
       anchorEl: null,
       eventId: null,
     });
+  };
+
+  // Function to handle updating an event
+  const handleUpdateEvent = async (
+    eventId: string,
+    data: Partial<CreateEventReq>
+  ) => {
+    try {
+      const updatedEvent = await updateEvent(eventId, data);
+      if (updatedEvent) {
+        console.log("Event updated successfully:", updatedEvent);
+        options?.onUpdateSuccess?.();
+        return true;
+      } else {
+        const errorMessage = "Failed to update the event. Please try again.";
+        setEventError(errorMessage);
+        options?.onUpdateError?.(errorMessage);
+        console.error("Error updating event:", errorMessage);
+        return false;
+      }
+    } catch (error) {
+      const errorMessage = "Failed to update the event. Please try again.";
+      setEventError(errorMessage);
+      options?.onUpdateError?.(errorMessage);
+      console.error("Error updating event:", error);
+      return false;
+    }
   };
 
   // Function to handle deleting an event
@@ -85,5 +114,6 @@ export const useEventManagement = (options?: UseEventManagementOptions) => {
     handleClose,
     handleStartEvent,
     handleDeleteEvent,
+    handleUpdateEvent,
   };
 };

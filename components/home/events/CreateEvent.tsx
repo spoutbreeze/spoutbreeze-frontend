@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { createEvent, CreateEventReq } from "@/actions/events";
+import { createEvent, CreateEventReq, Event } from "@/actions/events";
 import { ChannelWithUserName, fetchChannels } from "@/actions/channels";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -36,7 +36,9 @@ interface EventFormProps {
   channel?: ChannelWithUserName;
   onBack: () => void;
   onEventCreated?: () => void;
-  onError?: (message: string) => void; // Add error callback
+  onError?: (message: string) => void;
+  eventToEdit?: CreateEventReq;
+  onEventUpdated?: (eventId: string, data: Partial<CreateEventReq>) => void;
 }
 
 const CreateEvent: React.FC<EventFormProps> = ({
@@ -44,6 +46,8 @@ const CreateEvent: React.FC<EventFormProps> = ({
   onBack,
   onEventCreated,
   onError,
+  eventToEdit,
+  onEventUpdated,
 }) => {
   // Detect user's timezone
   const detectedTimezone = dayjs.tz.guess();
@@ -60,15 +64,24 @@ const CreateEvent: React.FC<EventFormProps> = ({
 
   // Initialize formData based on whether channel is provided
   const [formData, setFormData] = useState<CreateEventReq>({
-    title: "",
-    description: "",
-    occurs: "once",
-    start_date: new Date(),
-    end_date: new Date(),
-    start_time: new Date(),
-    timezone: detectedTimezone,
-    organizer_ids: [],
-    channel_name: channel ? channel.name : "", // Initialize with channel name or empty
+    title: eventToEdit ? eventToEdit.title : "",
+    description: eventToEdit ? eventToEdit.description : "",
+    occurs: eventToEdit ? eventToEdit.occurs : "once",
+    start_date: eventToEdit ? eventToEdit.start_date : new Date(),
+    end_date: eventToEdit ? eventToEdit.end_date : new Date(),
+    start_time: eventToEdit ? eventToEdit.start_time : new Date(),
+    timezone: eventToEdit ? eventToEdit.timezone : detectedTimezone,
+    organizer_ids: eventToEdit ? eventToEdit.organizer_ids : [],
+    channel_name: channel ? channel.name : "",
+    // title: "",
+    // description: "",
+    // occurs: "once",
+    // start_date: new Date(),
+    // end_date: new Date(),
+    // start_time: new Date(),
+    // timezone: detectedTimezone,
+    // organizer_ids: [],
+    // channel_name: channel ? channel.name : "",
   });
 
   // Fetch current user data
@@ -149,8 +162,13 @@ const CreateEvent: React.FC<EventFormProps> = ({
         start_time: startTimeUTC,
       };
 
-      await createEvent(eventData);
-
+      if (eventToEdit && onEventUpdated) {
+        // If editing an existing event, call the update function
+        await onEventUpdated(eventToEdit.title, eventData);
+      } else {
+        // If creating a new event, call the create function
+        await createEvent(eventData);
+      }
       // Call the callback to refresh events list
       if (onEventCreated) {
         onEventCreated();
@@ -211,7 +229,11 @@ const CreateEvent: React.FC<EventFormProps> = ({
             cursor: "pointer",
           }}
         />
-        {channel ? `Create New Event for ${channel.name}` : "Create New Event"}
+        {eventToEdit
+          ? `Edit Event: ${eventToEdit.title}`
+          : channel
+          ? `Create New Event for ${channel.name}`
+          : "Create New Event"}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -401,7 +423,10 @@ const CreateEvent: React.FC<EventFormProps> = ({
             }}
             disabled={loading}
           >
-            {loading ? "Creating..." : "Create Event"}
+            {loading 
+              ? (eventToEdit ? "Updating..." : "Creating...") 
+              : (eventToEdit ? "Update Event" : "Create Event")
+            }
           </Button>
         </div>
       </form>

@@ -4,6 +4,9 @@ import { Events } from "@/actions/events";
 import { eventMenuItems } from "../channelsPage/ChannelPage";
 import { useEventManagement } from "@/hooks/useEventManagement";
 import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
+import CreateEvent from "../events/CreateEvent";
+import { CreateEventReq } from "@/actions/events";
+import { convertEventToCreateEventReq } from "@/utils/eventUtils";
 
 interface EventsTabProps {
   fetchFunction: () => Promise<Events>;
@@ -21,8 +24,10 @@ const EventsTab: React.FC<EventsTabProps> = ({
   });
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [showEventForm, setShowEventForm] = React.useState(false);
+  const [editingEventId, setEditingEventId] = React.useState<string | null>(null);
 
-  const { menuState, handleClick, handleClose, handleStartEvent, handleDeleteEvent } =
+  const { menuState, handleClick, handleClose, handleStartEvent, handleDeleteEvent, handleUpdateEvent } =
     useEventManagement({
       onDeleteSuccess: () => {
         showSnackbar("Event deleted successfully!", "success");
@@ -35,6 +40,13 @@ const EventsTab: React.FC<EventsTabProps> = ({
         showSnackbar("Event started successfully!", "success");
       },
       onStartError: (message: string) => {
+        showSnackbar(message, "error");
+      },
+      onUpdateSuccess: () => {
+        showSnackbar("Event updated successfully!", "success");
+        fetchEventsData(); // Refresh the events list
+      },
+      onUpdateError: (message: string) => {
         showSnackbar(message, "error");
       },
     });
@@ -71,6 +83,49 @@ const EventsTab: React.FC<EventsTabProps> = ({
     }
   }, [fetchEventsData, onRefresh]);
 
+  const handleEditEvent = (eventId: string) => {
+    setEditingEventId(eventId);
+    setShowEventForm(true);
+  };
+
+  const handleBackToEvents = () => {
+    setShowEventForm(false);
+    setEditingEventId(null);
+  };
+
+  const handleEventCreated = () => {
+    fetchEventsData();
+    setShowEventForm(false);
+  };
+
+  const handleEventError = (message: string) => {
+    showSnackbar(message, "error");
+  };
+
+  if (showEventForm) {
+    const eventToEdit = editingEventId 
+      ? eventsData.events.find(event => event.id === editingEventId)
+      : undefined;
+
+    const eventToEditReq = eventToEdit 
+      ? convertEventToCreateEventReq(eventToEdit)
+      : undefined;
+
+    return (
+      <CreateEvent
+        onBack={handleBackToEvents}
+        onEventCreated={handleEventCreated}
+        onError={handleEventError}
+        eventToEdit={eventToEditReq}
+        onEventUpdated={(_, data) => {
+          if (editingEventId) {
+            handleUpdateEvent(editingEventId, data);
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <EventList
       loading={loading}
@@ -82,6 +137,7 @@ const EventsTab: React.FC<EventsTabProps> = ({
       menuState={menuState}
       handleStartEvent={handleStartEvent}
       handleDeleteEvent={handleDeleteEvent}
+      handleEditEvent={handleEditEvent}
     />
   );
 };

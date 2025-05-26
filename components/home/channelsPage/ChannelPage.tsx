@@ -16,6 +16,7 @@ import EventList from "../events/EventList";
 import NavigateBeforeRoundedIcon from "@mui/icons-material/NavigateBeforeRounded";
 import { useEventManagement } from "@/hooks/useEventManagement";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
+import { convertEventToCreateEventReq } from "@/utils/eventUtils";
 
 interface ChannelPageProps {
   channel: ChannelWithUserName;
@@ -58,6 +59,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
+  const [editingEventId, setEditingEventId] = React.useState<string | null>(null);
 
   const { showSnackbar } = useGlobalSnackbar();
 
@@ -70,10 +72,11 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     handleClose,
     handleStartEvent,
     handleDeleteEvent,
+    handleUpdateEvent,
   } = useEventManagement({
     onDeleteSuccess: () => {
       showSnackbar("Event deleted successfully!", "success");
-      fetchEvents(); // Refresh the events list
+      fetchEvents();
     },
     onDeleteError: (message: string) => {
       showSnackbar(message, "error");
@@ -82,6 +85,15 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
       showSnackbar("Event started successfully!", "success");
     },
     onStartError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+    onUpdateSuccess: () => {
+      showSnackbar("Event updated successfully!", "success");
+      fetchEvents();
+      setEditingEventId(null);
+      setShowEventForm(false);
+    },
+    onUpdateError: (message: string) => {
       showSnackbar(message, "error");
     },
   });
@@ -129,7 +141,20 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     showSnackbar(message, "error");
   };
 
+  const handleEditEvent = (eventId: string) => {
+    setEditingEventId(eventId);
+    setShowEventForm(true);
+  };
+
   if (showEventForm) {
+    const eventToEdit = editingEventId 
+      ? eventsData.events.find(event => event.id === editingEventId)
+      : undefined;
+
+    const eventToEditReq = eventToEdit 
+      ? convertEventToCreateEventReq(eventToEdit, channel.name)
+      : undefined;
+
     return (
       <section className="px-10 pt-10 h-screen overflow-y-auto">
         <CreateEvent
@@ -137,6 +162,12 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
           onBack={handleBackToChannel}
           onEventCreated={handleEventCreated}
           onError={handleEventError}
+          eventToEdit={eventToEditReq}
+          onEventUpdated={(_, data) => {
+            if (editingEventId) {
+              handleUpdateEvent(editingEventId, data);
+            }
+          }}
         />
       </section>
     );
@@ -201,6 +232,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
             menuState={menuState}
             handleStartEvent={handleStartEvent}
             handleDeleteEvent={handleDeleteEvent}
+            handleEditEvent={handleEditEvent}
           />
         )}
       </div>
