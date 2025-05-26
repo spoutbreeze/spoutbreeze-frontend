@@ -11,11 +11,13 @@ import { convertEventToCreateEventReq } from "@/utils/eventUtils";
 interface EventsTabProps {
   fetchFunction: () => Promise<Events>;
   onRefresh?: (refreshFn: () => void) => void;
+  onCreateEvent?: () => void; // Add this prop
 }
 
 const EventsTab: React.FC<EventsTabProps> = ({ 
   fetchFunction, 
   onRefresh,
+  onCreateEvent, // Add this prop
 }) => {
   const { showSnackbar } = useGlobalSnackbar();
   const [eventsData, setEventsData] = React.useState<Events>({
@@ -126,19 +128,37 @@ const EventsTab: React.FC<EventsTabProps> = ({
     );
   }
 
+  // Add empty state check in the return statement
   return (
-    <EventList
-      loading={loading}
-      error={error}
-      eventsData={eventsData}
-      eventMenuItems={eventMenuItems}
-      handleClick={handleClick}
-      handleClose={handleClose}
-      menuState={menuState}
-      handleStartEvent={handleStartEvent}
-      handleDeleteEvent={handleDeleteEvent}
-      handleEditEvent={handleEditEvent}
-    />
+    <>
+      {!loading && !error && eventsData.events.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+          <p className="text-lg mb-2">No events found</p>
+          <p className="text-sm text-center">
+            Create your first event to get started
+          </p>
+          <button
+            onClick={onCreateEvent}
+            className="mt-4 px-4 py-2 bg-[#27AAFF] text-white rounded-md text-sm hover:bg-[#2686BE] transition-colors"
+          >
+            Create Event
+          </button>
+        </div>
+      ) : (
+        <EventList
+          loading={loading}
+          error={error}
+          eventsData={eventsData}
+          eventMenuItems={eventMenuItems}
+          handleClick={handleClick}
+          handleClose={handleClose}
+          menuState={menuState}
+          handleStartEvent={handleStartEvent}
+          handleDeleteEvent={handleDeleteEvent}
+          handleEditEvent={handleEditEvent}
+        />
+      )}
+    </>
   );
 };
 

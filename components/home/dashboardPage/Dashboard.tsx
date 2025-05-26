@@ -158,6 +158,7 @@ const Dashboard: React.FC = () => {
             onRefresh={(refreshFn) => {
               refreshUpcomingEvents = refreshFn;
             }}
+            onCreateEvent={handleCreateEvent}
           />
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
