@@ -1,14 +1,13 @@
 import * as React from "react";
-import Button from "@mui/joy/Button";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
-import Stack from "@mui/joy/Stack";
-import Add from "@mui/icons-material/Add";
+import Button from "@mui/material/Button";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Stack from "@mui/material/Stack";
 import { CreateChannelReq } from "@/actions/channels";
 
 interface AddChannelModalProps {
@@ -36,7 +35,7 @@ const AddChannelModal: React.FC<AddChannelModalProps> = ({
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear error for this field when user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({
@@ -61,50 +60,89 @@ const AddChannelModal: React.FC<AddChannelModalProps> = ({
   };
 
   return (
-    <React.Fragment>
-      <Modal open={open} onClose={onClose}>
-        <ModalDialog>
-          <DialogTitle
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: "20px",
-            }}
-          >
-            Create Channel
-          </DialogTitle>
-          <form
-            onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <Stack spacing={2}>
-              <FormControl error={errors.name}>
-                <FormLabel>Name</FormLabel>
-                <Input 
-                  autoFocus 
-                  required 
-                  id="name" 
-                  name="name" 
-                  type="text" 
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter channel name"
-                />
-                {errors.name && (
-                  <div className="text-red-500 text-sm mt-1">
-                    Channel name is required
-                  </div>
-                )}
-              </FormControl>
-              <Button type="submit">Submit</Button>
-            </Stack>
-          </form>
-        </ModalDialog>
-      </Modal>
-    </React.Fragment>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "8px",
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontWeight: 600,
+          fontSize: "20px",
+        }}
+      >
+        Create Channel
+      </DialogTitle>
+      <DialogContent>
+        <form
+          onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <FormControl fullWidth>
+              <TextField
+                autoFocus
+                required
+                id="name"
+                name="name"
+                label="Name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter channel name"
+                error={errors.name}
+                helperText={errors.name ? "Channel name is required" : ""}
+                variant="outlined"
+              />
+            </FormControl>
+          </Stack>
+        </form>
+      </DialogContent>
+      <DialogActions sx={{ p: 3 }}>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          sx={{
+            padding: "10px",
+            fontSize: "14px",
+            fontWeight: 500,
+            textTransform: "none",
+            backgroundColor: "#CCCCCC",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#CCCCCC",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="outlined"
+          sx={{
+            padding: "10px",
+            fontSize: "14px",
+            fontWeight: 500,
+            textTransform: "none",
+            color: "#27AAFF",
+            borderColor: "#27AAFF",
+          }}
+        >
+          Create Channel
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

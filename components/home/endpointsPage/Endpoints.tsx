@@ -10,13 +10,20 @@ import {
   updateStreamEndpoint,
 } from "@/actions/streamEndpoints";
 import { fetchUserById, User } from "@/actions/fetchUsers";
-import Table from "@mui/joy/Table";
-import { Box } from "@mui/material";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+} from "@mui/material";
 import Image from "next/image";
 import AddEndpointModal from "./AddEndpointModal";
 import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
-import CustomSnackbar from "@/components/common/CustomSnackbar";
-import { useSnackbar } from "@/hooks/useSnackbar";
+import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 
 export interface EndpointWithUserName extends StreamEndpoints {
   userName: string;
@@ -36,13 +43,7 @@ const Endpoints: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [endpointToDelete, setEndpointToDelete] = useState<string | null>(null);
 
-  const {
-    snackbarOpen,
-    snackbarMessage,
-    snackbarSeverity,
-    showSnackbar,
-    closeSnackbar,
-  } = useSnackbar();
+  const { showSnackbar } = useGlobalSnackbar();
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -179,64 +180,92 @@ const Endpoints: React.FC = () => {
           + Add endpoint
         </button>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>{error}</p>
-      ) : (
-        <Table
-          sx={{
-            "& tr:nth-of-type(odd)": {
-              backgroundColor: "#F6F6F6",
-            },
-          }}
-          borderAxis="none"
-          className="rounded-[10px]"
-        >
-          <tbody className="text-[#5B5D60]">
-            <tr>
-              <td>ID</td>
-              <td>TITLE</td>
-              <td>CREATED BY</td>
-              <td style={{ width: "7%" }} />
-            </tr>
-            {streamEndpoints.length === 0 && (
-              <tr>
-                <td colSpan={4} className="text-center">
+
+      <TableContainer>
+        <Table>
+          <TableHead className="bg-[#F6F6F6]">
+            <TableRow sx={{ "& th": { py: "10px", borderBottom: "none" } }}>
+              <TableCell sx={{ color: "#5B5D60", fontWeight: 500 }}>
+                ID
+              </TableCell>
+              <TableCell sx={{ color: "#5B5D60", fontWeight: 500 }}>
+                TITLE
+              </TableCell>
+              <TableCell sx={{ color: "#5B5D60", fontWeight: 500 }}>
+                CREATED BY
+              </TableCell>
+              <TableCell sx={{ width: "7%" }}></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  sx={{ py: "15px", borderBottom: "none" }}
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  sx={{ py: "15px", borderBottom: "none" }}
+                >
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : streamEndpoints.length === 0 ? (
+              <TableRow
+                sx={{ "& td": { py: "15px", px: 0, borderBottom: "none" } }}
+              >
+                <TableCell colSpan={4} align="center">
                   No stream endpoints available
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
+            ) : (
+              streamEndpoints.map((endpoint, index) => (
+                <TableRow
+                  key={endpoint.id}
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#F6F6F6",
+                    },
+                    "& td": { py: "15px", borderBottom: "none" },
+                  }}
+                >
+                  <TableCell>{endpoint.id.substring(0, 5)}...</TableCell>
+                  <TableCell>{endpoint.title}</TableCell>
+                  <TableCell>{endpoint.userName}</TableCell>
+                  <TableCell>
+                    <Box className="flex items-center justify-start">
+                      <Image
+                        src="/delete_icon_outlined.svg"
+                        alt="Delete"
+                        width={20}
+                        height={20}
+                        className="cursor-pointer mr-5"
+                        onClick={() => confirmDeleteEndpoint(endpoint.id)}
+                      />
+                      <Image
+                        src="/edit_icon_outlined.svg"
+                        alt="Edit"
+                        width={20}
+                        height={20}
+                        className="cursor-pointer"
+                        onClick={() => handleEditEndpoint(endpoint.id)}
+                      />
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
-            {streamEndpoints.map((endpoint) => (
-              <tr key={endpoint.id}>
-                <td>{endpoint.id.substring(0, 5)}...</td>
-                <td>{endpoint.title}</td>
-                <td>{endpoint.userName}</td>
-                <td>
-                  <Box className="flex items-center justify-start">
-                    <Image
-                      src="/delete_icon_outlined.svg"
-                      alt="Delete"
-                      width={20}
-                      height={20}
-                      className="cursor-pointer mr-5"
-                      onClick={() => confirmDeleteEndpoint(endpoint.id)}
-                    />
-                    <Image
-                      src="/edit_icon_outlined.svg"
-                      alt="Edit"
-                      width={20}
-                      height={20}
-                      className="cursor-pointer"
-                      onClick={() => handleEditEndpoint(endpoint.id)}
-                    />
-                  </Box>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          </TableBody>
         </Table>
-      )}
+      </TableContainer>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
@@ -253,13 +282,6 @@ const Endpoints: React.FC = () => {
         onUpdate={handleUpdateEndpoint}
         isEditing={isEditing}
         currentEndpoint={currentEndpoint}
-      />
-
-      <CustomSnackbar
-        open={snackbarOpen}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-        onClose={closeSnackbar}
       />
     </div>
   );

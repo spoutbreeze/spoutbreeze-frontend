@@ -6,8 +6,7 @@ import Button from "@mui/material/Button";
 import PastEventList from "./PastEventList";
 import { fetchUpcmingEvents } from "@/actions/events";
 import CreateEvent from "@/components/home/events/CreateEvent";
-import CustomSnackbar from "@/components/common/CustomSnackbar";
-import { useSnackbar } from "@/hooks/useSnackbar";
+import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
 import EventsTab from "./EventsTab";
 
 interface TabPanelProps {
@@ -40,19 +39,11 @@ function a11yProps(index: number) {
 }
 
 const Dashboard: React.FC = () => {
+  const { showSnackbar } = useGlobalSnackbar();
   const [value, setValue] = React.useState(0);
   const [showEventForm, setShowEventForm] = React.useState(false);
 
   let refreshUpcomingEvents: (() => void) | null = null; // ✅ Store the refresh function
-
-  // Add snackbar hook for success messages
-  const {
-    snackbarOpen,
-    snackbarMessage,
-    snackbarSeverity,
-    showSnackbar,
-    closeSnackbar,
-  } = useSnackbar();
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -126,8 +117,8 @@ const Dashboard: React.FC = () => {
                 minWidth: "unset",
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#27AAFF", // Indicator color
-                height: 3, // Make the indicator slightly thicker
+                backgroundColor: "#27AAFF",
+                height: 3,
               },
             }}
           >
@@ -152,7 +143,7 @@ const Dashboard: React.FC = () => {
             padding: "10px",
             fontSize: "12px",
             fontWeight: 500,
-            borderRadius: "5px",
+            borderRadius: "2px",
             borderColor: "#27AAFF",
           }}
         >
@@ -173,14 +164,6 @@ const Dashboard: React.FC = () => {
           <PastEventList />
         </CustomTabPanel>
       </div>
-
-      {/* Add snackbar for success messages */}
-      <CustomSnackbar
-        open={snackbarOpen}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-        onClose={closeSnackbar}
-      />
     </section>
   );
 };

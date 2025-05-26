@@ -24,6 +24,7 @@ interface EventListProps {
     eventId: string | null;
   };
   handleStartEvent: (eventId: string) => void;
+  handleDeleteEvent: (eventId: string) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({
@@ -35,6 +36,7 @@ const EventList: React.FC<EventListProps> = ({
   handleClose,
   menuState,
   handleStartEvent,
+  handleDeleteEvent,
 }) => {
   const open = Boolean(menuState.anchorEl);
   
@@ -57,12 +59,19 @@ const EventList: React.FC<EventListProps> = ({
               >
                 <ListItemText
                   primary={event.title}
+                  slotProps={{
+                    primary: {
+                      sx: {
+                        fontSize: "18px",
+                        fontWeight: 500,
+                      }
+                    }
+                  }}
                   secondary={
                     <React.Fragment>
                       <Box
                         component="span"
                         display="flex"
-                        alignItems="self-start"
                         mt={1}
                       >
                         <Image
@@ -160,6 +169,10 @@ const EventList: React.FC<EventListProps> = ({
                           if (item.key === "start") {
                             if (menuState.eventId) {
                               handleStartEvent(menuState.eventId);
+                            }
+                          } else if (item.key === "delete") {
+                            if (menuState.eventId) {
+                              handleDeleteEvent(menuState.eventId);
                             }
                           }
                           handleClose();

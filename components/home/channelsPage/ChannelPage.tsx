@@ -15,8 +15,7 @@ import CreateEvent from "@/components/home/events/CreateEvent";
 import EventList from "../events/EventList";
 import NavigateBeforeRoundedIcon from "@mui/icons-material/NavigateBeforeRounded";
 import { useEventManagement } from "@/hooks/useEventManagement";
-import CustomSnackbar from "@/components/common/CustomSnackbar";
-import { useSnackbar } from "@/hooks/useSnackbar";
+import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 
 interface ChannelPageProps {
   channel: ChannelWithUserName;
@@ -40,6 +39,11 @@ export const eventMenuItems = [
     label: "Edit",
     icon: "/events/edit_icon.svg",
   },
+  {
+    key: "delete",
+    label: "Delete",
+    icon: "/delete_icon_outlined.svg",
+  },
 ];
 
 const ChannelPage: React.FC<ChannelPageProps> = ({
@@ -55,16 +59,9 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
 
-  // Add snackbar hook
-  const {
-    snackbarOpen,
-    snackbarMessage,
-    snackbarSeverity,
-    showSnackbar,
-    closeSnackbar,
-  } = useSnackbar();
+  const { showSnackbar } = useGlobalSnackbar();
 
-  // Use the custom hook instead of duplicating state and functions
+  // Use the custom hook with callbacks
   const {
     eventError,
     menuState,
@@ -72,28 +69,31 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     handleClick,
     handleClose,
     handleStartEvent,
-  } = useEventManagement();
+    handleDeleteEvent,
+  } = useEventManagement({
+    onDeleteSuccess: () => {
+      showSnackbar("Event deleted successfully!", "success");
+      fetchEvents(); // Refresh the events list
+    },
+    onDeleteError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+    onStartSuccess: () => {
+      showSnackbar("Event started successfully!", "success");
+    },
+    onStartError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+  });
 
   // Fetch events by channel ID
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchEventsByChannelId(channelId);
-      // Check for specific status codes
-      if (data.statusCode === 404) {
-        setError("This channel doesn't have any upcoming events.");
-        setEventsData({ events: [], total: 0 });
-      } else if (data.statusCode === 500) {
-        setError(
-          "The server encountered an error while retrieving events. Please try again later."
-        );
-        setEventsData({ events: [], total: 0 });
-        showSnackbar("Server error while retrieving events", "error");
-      } else {
-        // Success case
-        setEventsData({ events: data.events, total: data.total });
-        setError(null);
-      }
+      // Success case - assuming the function returns Events directly
+      setEventsData({ events: data.events, total: data.total });
+      setError(null);
     } catch (err) {
       // Generic error handling
       setError("Failed to load events. Please try again later.");
@@ -177,16 +177,32 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
         <h1 className="text-[22px] text-[#262262] font-semibold mb-4 sticky top-0 bg-white pb-2 z-10">
           Upcoming events
         </h1>
-        <EventList
-          loading={loading}
-          error={error}
-          eventsData={eventsData}
-          eventMenuItems={eventMenuItems}
-          handleClick={handleClick}
-          handleClose={handleClose}
-          menuState={menuState}
-          handleStartEvent={handleStartEvent}
-        />
+        {!loading && !error && eventsData.events.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+            <p className="text-lg mb-2">No events found</p>
+            <p className="text-sm text-center">
+              Create your first event to get started
+            </p>
+            <button
+              onClick={handleCreateEvent}
+              className="mt-4 px-4 py-2 bg-[#27AAFF] text-white rounded-md text-sm hover:bg-[#2686BE] transition-colors"
+            >
+              Create Event
+            </button>
+          </div>
+        ) : (
+          <EventList
+            loading={loading}
+            error={error}
+            eventsData={eventsData}
+            eventMenuItems={eventMenuItems}
+            handleClick={handleClick}
+            handleClose={handleClose}
+            menuState={menuState}
+            handleStartEvent={handleStartEvent}
+            handleDeleteEvent={handleDeleteEvent}
+          />
+        )}
       </div>
 
       {/* Recordings section */}
@@ -195,14 +211,6 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
           Recordings
         </h1>
       </div>
-
-      {/* Custom Snackbar for notifications */}
-      <CustomSnackbar
-        open={snackbarOpen}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-        onClose={closeSnackbar}
-      />
     </section>
   );
 };

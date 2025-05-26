@@ -16,8 +16,7 @@ import Image from "next/image";
 import ChannelPage from "./ChannelPage";
 import AddChannelModal from "./AddChannelModal";
 import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
-import CustomSnackbar from "@/components/common/CustomSnackbar";
-import { useSnackbar } from "@/hooks/useSnackbar";
+import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
 
 const colorPalette = [
   "#27AAFF", // Light Blue
@@ -55,14 +54,8 @@ const ChannelsComponent: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [channelToDelete, setChannelToDelete] = useState<string | null>(null);
 
-  // Use the custom hook
-  const {
-    snackbarOpen,
-    snackbarMessage,
-    snackbarSeverity,
-    showSnackbar,
-    closeSnackbar,
-  } = useSnackbar();
+  // Replace the useSnackbar hook:
+  const { showSnackbar } = useGlobalSnackbar();
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -230,13 +223,6 @@ const ChannelsComponent: React.FC = () => {
         open={openModal}
         onClose={handleCloseModal}
         onAdd={handleAddChannel}
-      />
-      {/* Snackbar for notifications */}
-      <CustomSnackbar
-        open={snackbarOpen}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-        onClose={closeSnackbar}
       />
     </section>
   );

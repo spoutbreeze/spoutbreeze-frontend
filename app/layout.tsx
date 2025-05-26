@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import ClientThemeProvider from "@/components/ThemeProvider";
+import { SnackbarProvider } from '@/contexts/SnackbarContext';
 import "./globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -28,7 +29,11 @@ export default function RootLayout({
           <nav>
             <Navbar />
           </nav>
-          <main className="pt-[80px]">{children}</main>
+          <main className="pt-[80px]">
+            <SnackbarProvider>
+              {children}
+            </SnackbarProvider>
+          </main>
         </ClientThemeProvider>
       </body>
     </html>

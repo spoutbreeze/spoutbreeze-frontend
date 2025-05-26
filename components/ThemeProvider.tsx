@@ -23,6 +23,21 @@ const theme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: "8px",
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontSize: "20px",
+          fontWeight: 600,
+        },
+      },
+    },
   },
 });
 

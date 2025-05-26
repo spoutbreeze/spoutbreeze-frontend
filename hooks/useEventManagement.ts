@@ -1,7 +1,14 @@
 import { useState } from 'react';
-import { startEvent } from '@/actions/events';
+import { startEvent, deleteEvent } from '@/actions/events';
 
-export const useEventManagement = () => {
+interface UseEventManagementOptions {
+  onDeleteSuccess?: () => void;
+  onDeleteError?: (message: string) => void;
+  onStartSuccess?: () => void;
+  onStartError?: (message: string) => void;
+}
+
+export const useEventManagement = (options?: UseEventManagementOptions) => {
   const [eventError, setEventError] = useState<string | null>(null);
   const [menuState, setMenuState] = useState<{
     anchorEl: HTMLElement | null;
@@ -28,6 +35,22 @@ export const useEventManagement = () => {
     });
   };
 
+  // Function to handle deleting an event
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await deleteEvent(eventId);
+      console.log("Event deleted successfully");
+      options?.onDeleteSuccess?.();
+      return true;
+    } catch (error) {
+      const errorMessage = "Failed to delete the event. Please try again.";
+      setEventError(errorMessage);
+      options?.onDeleteError?.(errorMessage);
+      console.error("Error deleting event:", error);
+      return false;
+    }
+  };
+
   // Function to handle starting an event
   const handleStartEvent = async (eventId: string) => {
     try {
@@ -35,13 +58,18 @@ export const useEventManagement = () => {
       if (joinUrl) {
         console.log("Join URL:", joinUrl);
         window.open(joinUrl, "_blank");
+        options?.onStartSuccess?.();
         return true;
       } else {
-        setEventError("Failed to start the event. Join URL not available.");
+        const errorMessage = "Failed to start the event. Join URL not available.";
+        setEventError(errorMessage);
+        options?.onStartError?.(errorMessage);
         return false;
       }
     } catch (error) {
-      setEventError("Failed to start the event. Please try again.");
+      const errorMessage = "Failed to start the event. Please try again.";
+      setEventError(errorMessage);
+      options?.onStartError?.(errorMessage);
       console.error("Error starting event:", error);
       return false;
     }
@@ -55,6 +83,7 @@ export const useEventManagement = () => {
     open,
     handleClick,
     handleClose,
-    handleStartEvent
+    handleStartEvent,
+    handleDeleteEvent,
   };
 };

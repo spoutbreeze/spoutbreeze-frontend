@@ -209,3 +209,28 @@ export const startEvent = async (eventId: string): Promise<string | null> => {
     return null;
   }
 };
+
+export const deleteEvent = async (eventId: string): Promise<void> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    await axiosInstance.delete(`/api/events/${eventId}`);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Response:", error.response?.data);
+      console.error("API Error Status:", error.response?.status);
+      
+      if (error.response?.status === 404) {
+        throw new Error("EVENT_NOT_FOUND");
+      }
+      
+      if (error.response?.status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+}

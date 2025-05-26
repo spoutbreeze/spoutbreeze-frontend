@@ -3,14 +3,18 @@ import EventList from "../events/EventList";
 import { Events } from "@/actions/events";
 import { eventMenuItems } from "../channelsPage/ChannelPage";
 import { useEventManagement } from "@/hooks/useEventManagement";
-import { useSnackbar } from "@/hooks/useSnackbar";
+import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
 
 interface EventsTabProps {
   fetchFunction: () => Promise<Events>;
   onRefresh?: (refreshFn: () => void) => void;
 }
 
-const EventsTab: React.FC<EventsTabProps> = ({ fetchFunction, onRefresh }) => {
+const EventsTab: React.FC<EventsTabProps> = ({ 
+  fetchFunction, 
+  onRefresh,
+}) => {
+  const { showSnackbar } = useGlobalSnackbar();
   const [eventsData, setEventsData] = React.useState<Events>({
     events: [],
     total: 0,
@@ -18,10 +22,22 @@ const EventsTab: React.FC<EventsTabProps> = ({ fetchFunction, onRefresh }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const { showSnackbar } = useSnackbar();
-
-  const { menuState, handleClick, handleClose, handleStartEvent } =
-    useEventManagement();
+  const { menuState, handleClick, handleClose, handleStartEvent, handleDeleteEvent } =
+    useEventManagement({
+      onDeleteSuccess: () => {
+        showSnackbar("Event deleted successfully!", "success");
+        fetchEventsData(); // Refresh the events list
+      },
+      onDeleteError: (message: string) => {
+        showSnackbar(message, "error");
+      },
+      onStartSuccess: () => {
+        showSnackbar("Event started successfully!", "success");
+      },
+      onStartError: (message: string) => {
+        showSnackbar(message, "error");
+      },
+    });
 
   const fetchEventsData = React.useCallback(async () => {
     try {
@@ -29,29 +45,15 @@ const EventsTab: React.FC<EventsTabProps> = ({ fetchFunction, onRefresh }) => {
       const data = await fetchFunction();
 
       if (data.events.length === 0 && data.total === 0) {
-        setError("No events found.");
         setEventsData({ events: [], total: 0 });
+        setError(null);
       } else {
-        setEventsData({ events: data.events, total: data.total });
+        setEventsData(data);
         setError(null);
       }
     } catch (error) {
-      if (error instanceof Error && error.message === "SERVER_ERROR") {
-        setError(
-          "The server encountered an error while retrieving events. Please try again later."
-        );
-        showSnackbar("Server error while retrieving events", "error");
-      } else if (
-        error instanceof Error &&
-        error.message === "VALIDATION_ERROR"
-      ) {
-        setError("There was an issue with the request format.");
-        showSnackbar("Request validation error", "error");
-      } else {
-        setError("Failed to fetch events. Please try again.");
-        showSnackbar("Failed to fetch events", "error");
-      }
-      setEventsData({ events: [], total: 0 });
+      setError("Failed to load events. Please try again later.");
+      showSnackbar("Failed to load events", "error");
       console.error("Error fetching events:", error);
     } finally {
       setLoading(false);
@@ -79,6 +81,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ fetchFunction, onRefresh }) => {
       handleClose={handleClose}
       menuState={menuState}
       handleStartEvent={handleStartEvent}
+      handleDeleteEvent={handleDeleteEvent}
     />
   );
 };
