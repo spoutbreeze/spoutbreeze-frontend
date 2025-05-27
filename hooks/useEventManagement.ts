@@ -1,5 +1,12 @@
-import { useState } from 'react';
-import { startEvent, deleteEvent, updateEvent, CreateEventReq } from '@/actions/events';
+import { useState } from "react";
+import {
+  startEvent,
+  deleteEvent,
+  updateEvent,
+  getJoinUrl,
+  JoinUrls,
+  CreateEventReq,
+} from "@/actions/events";
 
 interface UseEventManagementOptions {
   onDeleteSuccess?: () => void;
@@ -90,7 +97,8 @@ export const useEventManagement = (options?: UseEventManagementOptions) => {
         options?.onStartSuccess?.();
         return true;
       } else {
-        const errorMessage = "Failed to start the event. Join URL not available.";
+        const errorMessage =
+          "Failed to start the event. Join URL not available.";
         setEventError(errorMessage);
         options?.onStartError?.(errorMessage);
         return false;
@@ -104,6 +112,13 @@ export const useEventManagement = (options?: UseEventManagementOptions) => {
     }
   };
 
+  // Simplify the get join URL function since we don't need to call the API
+  const handleGetJoinUrl = async (eventId: string): Promise<void> => {
+    // No need to make API call anymore, just pass the eventId to the dialog
+    // The dialog will generate shareable URLs using getShareableJoinUrl
+    return Promise.resolve();
+  };
+
   const open = Boolean(menuState.anchorEl);
 
   return {
@@ -115,5 +130,6 @@ export const useEventManagement = (options?: UseEventManagementOptions) => {
     handleStartEvent,
     handleDeleteEvent,
     handleUpdateEvent,
+    handleGetJoinUrl,
   };
 };

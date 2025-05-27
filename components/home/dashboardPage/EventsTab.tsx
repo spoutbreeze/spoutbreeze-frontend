@@ -3,7 +3,7 @@ import EventList from "../events/EventList";
 import { Events } from "@/actions/events";
 import { eventMenuItems } from "../channelsPage/ChannelPage";
 import { useEventManagement } from "@/hooks/useEventManagement";
-import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
+import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import CreateEvent from "../events/CreateEvent";
 import { CreateEventReq } from "@/actions/events";
 import { convertEventToCreateEventReq } from "@/utils/eventUtils";
@@ -14,8 +14,8 @@ interface EventsTabProps {
   onCreateEvent?: () => void; // Add this prop
 }
 
-const EventsTab: React.FC<EventsTabProps> = ({ 
-  fetchFunction, 
+const EventsTab: React.FC<EventsTabProps> = ({
+  fetchFunction,
   onRefresh,
   onCreateEvent, // Add this prop
 }) => {
@@ -27,31 +27,40 @@ const EventsTab: React.FC<EventsTabProps> = ({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
-  const [editingEventId, setEditingEventId] = React.useState<string | null>(null);
+  const [editingEventId, setEditingEventId] = React.useState<string | null>(
+    null
+  );
 
-  const { menuState, handleClick, handleClose, handleStartEvent, handleDeleteEvent, handleUpdateEvent } =
-    useEventManagement({
-      onDeleteSuccess: () => {
-        showSnackbar("Event deleted successfully!", "success");
-        fetchEventsData(); // Refresh the events list
-      },
-      onDeleteError: (message: string) => {
-        showSnackbar(message, "error");
-      },
-      onStartSuccess: () => {
-        showSnackbar("Event started successfully!", "success");
-      },
-      onStartError: (message: string) => {
-        showSnackbar(message, "error");
-      },
-      onUpdateSuccess: () => {
-        showSnackbar("Event updated successfully!", "success");
-        fetchEventsData(); // Refresh the events list
-      },
-      onUpdateError: (message: string) => {
-        showSnackbar(message, "error");
-      },
-    });
+  const {
+    menuState,
+    handleClick,
+    handleClose,
+    handleStartEvent,
+    handleDeleteEvent,
+    handleUpdateEvent,
+    handleGetJoinUrl,
+  } = useEventManagement({
+    onDeleteSuccess: () => {
+      showSnackbar("Event deleted successfully!", "success");
+      fetchEventsData(); // Refresh the events list
+    },
+    onDeleteError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+    onStartSuccess: () => {
+      showSnackbar("Event started successfully!", "success");
+    },
+    onStartError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+    onUpdateSuccess: () => {
+      showSnackbar("Event updated successfully!", "success");
+      fetchEventsData(); // Refresh the events list
+    },
+    onUpdateError: (message: string) => {
+      showSnackbar(message, "error");
+    },
+  });
 
   const fetchEventsData = React.useCallback(async () => {
     try {
@@ -105,11 +114,11 @@ const EventsTab: React.FC<EventsTabProps> = ({
   };
 
   if (showEventForm) {
-    const eventToEdit = editingEventId 
-      ? eventsData.events.find(event => event.id === editingEventId)
+    const eventToEdit = editingEventId
+      ? eventsData.events.find((event) => event.id === editingEventId)
       : undefined;
 
-    const eventToEditReq = eventToEdit 
+    const eventToEditReq = eventToEdit
       ? convertEventToCreateEventReq(eventToEdit)
       : undefined;
 
@@ -156,6 +165,7 @@ const EventsTab: React.FC<EventsTabProps> = ({
           handleStartEvent={handleStartEvent}
           handleDeleteEvent={handleDeleteEvent}
           handleEditEvent={handleEditEvent}
+          handleGetJoinUrl={handleGetJoinUrl}
         />
       )}
     </>

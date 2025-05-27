@@ -73,6 +73,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     handleStartEvent,
     handleDeleteEvent,
     handleUpdateEvent,
+    handleGetJoinUrl,
   } = useEventManagement({
     onDeleteSuccess: () => {
       showSnackbar("Event deleted successfully!", "success");
@@ -233,6 +234,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
             handleStartEvent={handleStartEvent}
             handleDeleteEvent={handleDeleteEvent}
             handleEditEvent={handleEditEvent}
+            handleGetJoinUrl={handleGetJoinUrl}
           />
         )}
       </div>

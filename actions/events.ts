@@ -49,6 +49,11 @@ export interface CreateEventReq {
   channel_name: string;
 }
 
+export interface JoinUrls {
+  attendee_join_url: string;
+  moderator_join_url: string;
+}
+
 export const fetchEvents = async (): Promise<Events> => {
   try {
     const token = localStorage.getItem("access_token");
@@ -231,6 +236,67 @@ export const updateEvent = async (eventId: string, data: Partial<CreateEventReq>
       
       if (error.response?.status === 404) {
         throw new Error("EVENT_NOT_FOUND");
+      }
+      
+      if (error.response?.status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+};
+
+export const getJoinUrl = async (eventId: string): Promise<JoinUrls | null> => {
+  try {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await axiosInstance.post(`/api/events/${eventId}/join-url`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Response:", error.response?.data);
+      console.error("API Error Status:", error.response?.status);
+      
+      if (error.response?.status === 404) {
+        throw new Error("EVENT_NOT_FOUND");
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error("EVENT_NOT_STARTED");
+      }
+      
+      if (error.response?.status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+};
+
+// New function to get join URL with user's name (no auth required for public join)
+export const getJoinUrlWithName = async (eventId: string, fullName: string, role: 'attendee' | 'moderator' = 'attendee'): Promise<string | null> => {
+  try {
+    // Create a request without auth headers
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/join-url`, {
+      full_name: fullName
+    });
+    
+    // Return the appropriate URL based on role
+    return role === 'moderator' ? response.data.moderator_join_url : response.data.attendee_join_url;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Response:", error.response?.data);
+      console.error("API Error Status:", error.response?.status);
+      
+      if (error.response?.status === 404) {
+        throw new Error("EVENT_NOT_FOUND");
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error("EVENT_NOT_STARTED");
       }
       
       if (error.response?.status === 500) {

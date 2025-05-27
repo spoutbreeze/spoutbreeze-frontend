@@ -10,7 +10,9 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { formatTime, formatDate } from "@/utils/dateTimeFormatter";
-import { Events } from "@/actions/events";
+import { Events, JoinUrls } from "@/actions/events";
+import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
+import JoinUrlDialog from "./JoinUrlDialog";
 
 interface EventListProps {
   loading: boolean;
@@ -26,6 +28,7 @@ interface EventListProps {
   handleStartEvent: (eventId: string) => void;
   handleDeleteEvent: (eventId: string) => void;
   handleEditEvent: (eventId: string) => void;
+  handleGetJoinUrl: (eventId: string) => Promise<void>; // Change return type
 }
 
 const EventList: React.FC<EventListProps> = ({
@@ -39,9 +42,35 @@ const EventList: React.FC<EventListProps> = ({
   handleStartEvent,
   handleDeleteEvent,
   handleEditEvent,
+  handleGetJoinUrl,
 }) => {
   const open = Boolean(menuState.anchorEl);
-  
+  const { showSnackbar } = useGlobalSnackbar();
+
+  const [urlDialog, setUrlDialog] = React.useState({
+    open: false,
+    eventId: "", // Change from joinUrls to eventId
+    eventTitle: "",
+  });
+
+  const handleCopyLink = async (eventId: string) => {
+    try {
+      const event = eventsData.events.find((e) => e.id === eventId);
+      setUrlDialog({
+        open: true,
+        eventId: eventId, // Store eventId instead of joinUrls
+        eventTitle: event?.title || "Event",
+      });
+    } catch (error) {
+      console.error("Error preparing join URLs:", error);
+      showSnackbar("Failed to prepare join URLs. Please try again.", "error");
+    }
+  };
+
+  const handleCloseUrlDialog = () => {
+    setUrlDialog({ open: false, eventId: "", eventTitle: "" });
+  };
+
   return (
     <div className="flex flex-col">
       {loading ? (
@@ -66,16 +95,12 @@ const EventList: React.FC<EventListProps> = ({
                       sx: {
                         fontSize: "18px",
                         fontWeight: 500,
-                      }
-                    }
+                      },
+                    },
                   }}
                   secondary={
                     <React.Fragment>
-                      <Box
-                        component="span"
-                        display="flex"
-                        mt={1}
-                      >
+                      <Box component="span" display="flex" mt={1}>
                         <Image
                           src="/events/agenda_icon.svg"
                           alt="agenda"
@@ -112,7 +137,10 @@ const EventList: React.FC<EventListProps> = ({
 
                 {/* item related buttons */}
                 <div className="flex items-center">
-                  <button className="flex items-center text-[#27AAFF] font-medium text-[13px] cursor-pointer mr-[15px] whitespace-nowrap">
+                  <button
+                    onClick={() => handleCopyLink(event.id)}
+                    className="flex items-center text-[#27AAFF] font-medium text-[13px] cursor-pointer mr-[15px] whitespace-nowrap"
+                  >
                     <Image
                       src="/events/link_icon.svg"
                       alt="copy link"
@@ -122,7 +150,6 @@ const EventList: React.FC<EventListProps> = ({
                     />
                     Copy Link
                   </button>
-                  {/* more options button with icon */}
                   <button
                     id="event-menu"
                     aria-controls={open ? "event-menu" : undefined}
@@ -217,6 +244,14 @@ const EventList: React.FC<EventListProps> = ({
           ))}
         </div>
       )}
+
+      {/* URL Selection Dialog */}
+      <JoinUrlDialog
+        open={urlDialog.open}
+        onClose={handleCloseUrlDialog}
+        eventId={urlDialog.eventId} // Pass eventId instead of joinUrls
+        eventTitle={urlDialog.eventTitle}
+      />
     </div>
   );
 };
