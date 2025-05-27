@@ -23,10 +23,7 @@ export interface CreateChannelReq {
 
 export const fetchChannels = async (): Promise<Channels> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return { channels: [], total: 0 };
-    }
+
 
     const response = await axiosInstance.get("/api/channels/all");
     return response.data;

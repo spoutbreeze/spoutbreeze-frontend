@@ -12,38 +12,36 @@ export const initPKCE = async () => {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-  // Store code verifier in localStorage or sessionStorage
+  // Store code verifier in sessionStorage
   sessionStorage.setItem("code_verifier", codeVerifier);
 
   return { codeVerifier, codeChallenge };
 };
 
-
 export const getLoginUrl = async () => {
   // Initialize PKCE
   const { codeChallenge } = await initPKCE();
 
-  const url = `${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${KEYCLOAK_CLIENT_ID}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(
+  const url = `${KEYCLOAK_SERVER_URL}realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${KEYCLOAK_CLIENT_ID}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(
     KEYCLOAK_REDIRECT_URI ?? ""
   )}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
-  console.log("codeChallenge", codeChallenge);
-  console.log("url", url);
+  
   return url;
 };
 
 // Send code to FastAPI backend for token exchange
 export const exchangeCodeForToken = async (code: string) => {
-  // Get the stored code verifier
   const codeVerifier = sessionStorage.getItem("code_verifier");
 
   if (!codeVerifier) {
     throw new Error("Code verifier not found");
   }
 
-  // Call your FastAPI backend endpoint
+  // Backend will set httpOnly cookies
   const response = await fetch("http://localhost:8000/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include", // Important: include cookies
     body: JSON.stringify({
       code,
       redirect_uri: KEYCLOAK_REDIRECT_URI,
@@ -54,74 +52,47 @@ export const exchangeCodeForToken = async (code: string) => {
   if (!response.ok) {
     throw new Error("Failed to exchange code for token");
   }
-
+  
+  // Clear the code verifier after successful exchange
+  sessionStorage.removeItem("code_verifier");
+  
   const data = await response.json();
-  setTokens(data.access_token, data.refresh_token);
   return data;
 };
 
-export const getToken = () => {
-  return localStorage.getItem("access_token");
-};
-
-export const setTokens = (access_token: string, refresh_token: string) => {
-  localStorage.setItem("access_token", access_token);
-  localStorage.setItem("refresh_token", refresh_token);
-};
-
+// Clear sessionStorage only
 export const clearTokens = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
   sessionStorage.removeItem("code_verifier");
+  // Note: HTTP-only cookies are cleared by the backend logout endpoint
 };
 
 export const refreshToken = async () => {
-  const refresh_token = localStorage.getItem("refresh_token");
-  
-  console.log("Refresh token from storage:", refresh_token ? "exists" : "missing"); // Debug log
-  
-  if (!refresh_token) return null;
-
   try {
     const response = await fetch("http://localhost:8000/api/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token }),
+      credentials: "include", // Include cookies
     });
 
-    // Log the response details for debugging
-    console.log("Refresh response status:", response.status);
-    
     if (!response.ok) {
-      // Get the error details from the response
-      const errorData = await response.text();
-      console.error("Refresh failed with status:", response.status);
-      console.error("Error details:", errorData);
-      
-      // If it's a 401, the refresh token is invalid/expired
-      if (response.status === 401) {
-        console.log("Refresh token expired or invalid - clearing tokens");
-        clearTokens();
-        return null;
-      }
-      
-      throw new Error(`Failed to refresh token: ${response.status}`);
+      return null; // Return null on failure
     }
 
     const data = await response.json();
-    console.log("Refresh response:", data); // Debug log
-    
-    if (data.access_token) {
-      // Update tokens (refresh_token might be rotated)
-      const newRefreshToken = data.refresh_token || refresh_token;
-      setTokens(data.access_token, newRefreshToken);
-      return data.access_token;
-    } else {
-      throw new Error("No access token in refresh response");
-    }
+    return data; // Return user info
   } catch (error) {
     console.error("Refresh token error:", error);
-    clearTokens();
-    return null;
+    return null; // Return null instead of redirecting
   }
+};
+
+// Check if user is authenticated (client-side helper)
+export const isAuthenticated = (): boolean => {
+  // Since we're using HTTP-only cookies, we can't check directly on client
+  // This is mainly for client-side logic, the real auth check happens on server
+  if (typeof window === 'undefined') return false;
+  
+  // You could store a flag in localStorage when auth succeeds, or use other methods
+  // For now, we'll rely on the API call in components
+  return false;
 };

@@ -56,10 +56,6 @@ export interface JoinUrls {
 
 export const fetchEvents = async (): Promise<Events> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return { events: [], total: 0 };
-    }
 
     const response = await axiosInstance.get("/api/events/all");
     return response.data;
@@ -81,10 +77,6 @@ export const fetchEvents = async (): Promise<Events> => {
 
 export const fetchEventsByChannelId = async (channelId: string): Promise<Events> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return { events: [], total: 0 };
-    }
 
     const response = await axiosInstance.get(`/api/events/channel/${channelId}`);
     return response.data;
@@ -106,10 +98,7 @@ export const fetchEventsByChannelId = async (channelId: string): Promise<Events>
 
 export const fetchUpcmingEvents = async (): Promise<Events> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return { events: [], total: 0 };
-    }
+
 
     const response = await axiosInstance.get("/api/events/upcoming");
     return response.data;
@@ -131,10 +120,7 @@ export const fetchUpcmingEvents = async (): Promise<Events> => {
 
 export const fetchPastEvents = async (): Promise<Events> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return { events: [], total: 0 };
-    }
+
 
     const response = await axiosInstance.get("/api/events/past");
     return response.data;
@@ -156,10 +142,7 @@ export const fetchPastEvents = async (): Promise<Events> => {
 
 export const createEvent = async (data: CreateEventReq): Promise<Event | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
+
     
     const response = await axiosInstance.post("/api/events/", data);
     return response.data;
@@ -202,10 +185,7 @@ export const createEvent = async (data: CreateEventReq): Promise<Event | null> =
 // Fucntion to start an event, it will return the join url
 export const startEvent = async (eventId: string): Promise<string | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return null;
-    }
+
 
     const response = await axiosInstance.post(`/api/events/${eventId}/start`);
     return response.data.join_url;
@@ -217,10 +197,7 @@ export const startEvent = async (eventId: string): Promise<string | null> => {
 
 export const updateEvent = async (eventId: string, data: Partial<CreateEventReq>): Promise<Event | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
+
 
     const response = await axiosInstance.put(`/api/events/${eventId}`, data);
     return response.data;
@@ -248,10 +225,7 @@ export const updateEvent = async (eventId: string, data: Partial<CreateEventReq>
 
 export const getJoinUrl = async (eventId: string): Promise<JoinUrls | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
+
 
     const response = await axiosInstance.post(`/api/events/${eventId}/join-url`);
     return response.data;
@@ -309,10 +283,7 @@ export const getJoinUrlWithName = async (eventId: string, fullName: string, role
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
+
 
     await axiosInstance.delete(`/api/events/${eventId}`);
   } catch (error) {

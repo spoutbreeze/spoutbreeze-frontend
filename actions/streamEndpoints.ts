@@ -18,10 +18,6 @@ export interface createStreamEndpointReq {
 
 export const fetchStreamEndpoints = async (): Promise<StreamEndpoints[]> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return [];
-    }
 
     const response = await axiosInstance.get("/api/stream-endpoint/");
     return response.data;
@@ -35,10 +31,6 @@ export const createStreamEndpoint = async (
   data: createStreamEndpointReq
 ): Promise<createStreamEndpointReq[]> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return [];
-    }
 
     const response = await axiosInstance.post(
       "/api/stream-endpoint/create",
@@ -53,10 +45,6 @@ export const createStreamEndpoint = async (
 
 export const deleteStreamEndpoint = async (id: string): Promise<void> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return;
-    }
 
     await axiosInstance.delete(`/api/stream-endpoint/${id}`);
   } catch (error) {
@@ -70,10 +58,6 @@ export const updateStreamEndpoint = async (
   data: createStreamEndpointReq
 ): Promise<createStreamEndpointReq[]> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return [];
-    }
 
     const response = await axiosInstance.put(
       `/api/stream-endpoint/${id}`,

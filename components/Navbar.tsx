@@ -11,7 +11,6 @@ import { getLoginUrl } from "@/lib/auth";
 import { User, fetchCurrentUser } from "@/actions/fetchUsers";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { stringToColor } from "@/utils/userAvatarColor";
-import { clearTokens } from "@/lib/auth";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -47,32 +46,27 @@ const Navbar: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const [logoutLoading, setLogoutLoading] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-  const [logoutSuccess, setLogoutSuccess] = useState(false);
-  const [logoutMessage, setLogoutMessage] = useState("");
-  const [logoutStatusCode, setLogoutStatusCode] = useState<number | null>(null);
 
   const handleLogoutClick = async () => {
     setLogoutLoading(true);
-    setLogoutError(null);
+    setAnchorEl(null); // Close menu immediately
 
     try {
-      const response = await logout();
+      // Clear user state first to prevent UI flicker
+      setUser(null);
 
-      if (response.statusCode === 200) {
-        setLogoutSuccess(true);
-        setLogoutMessage(response.message);
-        // Redirect after successful logout
-        window.location.href = "/";
-      } else {
-        setLogoutError(response.message || "Logout failed");
-      }
+      // Call logout endpoint (clears HTTP-only cookies)
+      await logout();
+
+      // Force hard redirect to trigger middleware and prevent loops
+      window.location.href = "/";
     } catch (error) {
-      setLogoutError("Failed to log out");
       console.error("Logout error:", error);
+      // Even if logout fails, clear user state and redirect
+      setUser(null);
+      window.location.href = "/";
     } finally {
       setLogoutLoading(false);
-      setAnchorEl(null); // Close the menu
     }
   };
 
@@ -91,23 +85,30 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check if user is authenticated
-      const userData = await fetchCurrentUser();
-      setUser(userData);
-      setLoading(false);
+      // Skip auth check on auth pages, join pages, and landing page
+      if (
+        pathname.includes("/auth/") ||
+        pathname.includes("/join/") ||
+        pathname === "/"
+      ) {
+        setLoading(false);
+        setUser(null);
+        return;
+      }
+
+      try {
+        // fetchCurrentUser automatically uses HTTP-only cookies via axiosInstance
+        const userData = await fetchCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuth();
-
-    // Check for token in URL after Keycloak callback
-    const token = searchParams.get("token");
-    if (token) {
-      localStorage.setItem("access_token", token);
-      // Remove token from URL for security reasons
-      const newUrl = pathname;
-      router.replace(newUrl);
-      checkAuth(); // Fetch user data again with the new token
-    }
   }, [pathname, searchParams, router]);
 
   return (
@@ -234,11 +235,12 @@ const Navbar: React.FC = () => {
                 disableGutters
                 dense
                 sx={{ pl: "14px", pt: "15px", pb: "15px" }}
+                disabled={logoutLoading}
               >
                 <ListItemIcon>
                   <LogoutOutlinedIcon fontSize="small" />
                 </ListItemIcon>
-                Sign out
+                {logoutLoading ? "Signing out..." : "Sign out"}
               </MenuItem>
             </Menu>
           </>

@@ -1,6 +1,5 @@
 import { clearTokens } from "@/lib/auth";
 import axiosInstance from "@/lib/axios";
-import axios from "axios";
 
 export interface LogoutResponse {
   message: string;
@@ -9,26 +8,21 @@ export interface LogoutResponse {
 
 export const logout = async (): Promise<LogoutResponse> => {
   try {
-    const token = localStorage.getItem("refresh_token");
-    if (!token) {
-      clearTokens();
-      return { message: "No token found", statusCode: 401 };
-    }
+    // Backend gets refresh_token from cookies automatically
+    const response = await axiosInstance.post("/api/logout");
 
-    const response = await axiosInstance.post("/api/logout", {
-      refresh_token: token,
-    });
-
-    if (response.data.statusCode === 200) {
-      clearTokens();
-    }
+    // Clear sessionStorage (cookies are already cleared by backend)
+    clearTokens();
 
     return response.data;
   } catch (error) {
     console.error("Error logging out:", error);
+    
+    // Even if logout fails, clear sessionStorage
     clearTokens();
+    
     return {
-      message: "Logout failed",
+      message: "Logout completed (with errors)",
       statusCode: 500,
     };
   }

@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { AxiosError } from "axios";
 
 // User interface
 export interface User {
@@ -11,26 +12,20 @@ export interface User {
 
 export const fetchCurrentUser = async (): Promise<User | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return null;
-    }
-
     const response = await axiosInstance.get("/api/me");
     return response.data;
   } catch (error) {
-    console.error("Error fetching user data:", error);
+    // Return null for any error (including 401)
+    // Don't log 401 errors as they're expected when not authenticated
+    if ((error as AxiosError)?.response?.status !== 401) {
+      console.error("Error fetching user data:", error);
+    }
     return null;
   }
 };
 
 export const fetchUserById = async (userId: string): Promise<User | null> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return null;
-    }
-
     const response = await axiosInstance.get(`/api/users/${userId}`);
     return response.data;
   } catch (error) {
@@ -41,11 +36,6 @@ export const fetchUserById = async (userId: string): Promise<User | null> => {
 
 export const fetchUsers = async (): Promise<User[]> => {
   try {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      return [];
-    }
-
     const response = await axiosInstance.get("/api/users");
     return response.data;
   } catch (error) {

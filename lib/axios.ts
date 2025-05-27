@@ -1,45 +1,94 @@
 import axios from 'axios'
 import { refreshToken, clearTokens, getLoginUrl } from './auth'
 
-const headers = {
-  Accept: 'application/json',
-  'Content-Type': 'application/json',
-}
-
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers,
-  withCredentials: true, // optional depending on the backend
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Essential: always send cookies
 })
 
-// Add access token to each request
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+// Track if we're currently refreshing to prevent multiple refresh attempts
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-// Handle 401 errors and refresh token
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
+// List of paths where 401 should NOT trigger redirect to login
+const publicPaths = ['/', '/auth/', '/join/'];
+
+const isPublicPath = (pathname: string) => {
+  return publicPaths.some(path => pathname.includes(path));
+};
+
+// Simplified response interceptor with loop prevention
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error.response?.status === 401) {
-      const newToken = await refreshToken()
+    const originalRequest = error.config;
 
-      if (newToken) {
-        error.config.headers.Authorization = `Bearer ${newToken}`
-        return axiosInstance(error.config) // Use axiosInstance instead of axios
-      } else {
-        clearTokens()
-        const returnUrl = window.location.pathname
-        const loginUrl = await getLoginUrl() // Await the async function
-        window.location.href = `${loginUrl}&redirect_uri=${encodeURIComponent(window.location.origin + returnUrl)}`
-        return Promise.reject(error) // Return rejected promise instead of just return
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If we're already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          return axiosInstance(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshSuccess = await refreshToken();
+
+        if (refreshSuccess) {
+          processQueue(null);
+          return axiosInstance(originalRequest);
+        } else {
+          processQueue(error, null);
+          clearTokens();
+          
+          // Only redirect to login if we're NOT on a public path
+          if (!isPublicPath(window.location.pathname)) {
+            const loginUrl = await getLoginUrl();
+            window.location.href = loginUrl;
+          }
+          
+          return Promise.reject(error);
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        clearTokens();
+        
+        // Only redirect to login if we're NOT on a public path
+        if (!isPublicPath(window.location.pathname)) {
+          const loginUrl = await getLoginUrl();
+          window.location.href = loginUrl;
+        }
+        
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
-    return Promise.reject(error)
+
+    return Promise.reject(error);
   }
 )
 
