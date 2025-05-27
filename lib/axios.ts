@@ -7,7 +7,7 @@ const headers = {
 }
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers,
   withCredentials: true, // optional depending on the backend
 })
