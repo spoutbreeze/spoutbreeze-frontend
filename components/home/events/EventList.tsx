@@ -13,6 +13,8 @@ import { formatTime, formatDate } from "@/utils/dateTimeFormatter";
 import { Events, JoinUrls } from "@/actions/events";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import JoinUrlDialog from "./JoinUrlDialog";
+// Import the LiveBadge component
+import LiveBadge from "@/components/common/LiveBadge";
 
 interface EventListProps {
   loading: boolean;
@@ -89,7 +91,14 @@ const EventList: React.FC<EventListProps> = ({
                 }}
               >
                 <ListItemText
-                  primary={event.title}
+                  primary={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <span style={{ fontSize: "18px", fontWeight: 500 }}>
+                        {event.title}
+                      </span>
+                      <LiveBadge show={event.status === "live"} variant="pulse" />
+                    </Box>
+                  }
                   slotProps={{
                     primary: {
                       sx: {
@@ -137,19 +146,22 @@ const EventList: React.FC<EventListProps> = ({
 
                 {/* item related buttons */}
                 <div className="flex items-center">
-                  <button
-                    onClick={() => handleCopyLink(event.id)}
-                    className="flex items-center text-[#27AAFF] font-medium text-[13px] cursor-pointer mr-[15px] whitespace-nowrap"
-                  >
-                    <Image
-                      src="/events/link_icon.svg"
-                      alt="copy link"
-                      width={15}
-                      height={15}
-                      className="mr-[5px]"
-                    />
-                    Copy Link
-                  </button>
+                  {/* Only show Copy Link button if event status is not "ended" */}
+                  {event.status !== "ended" && (
+                    <button
+                      onClick={() => handleCopyLink(event.id)}
+                      className="flex items-center text-[#27AAFF] font-medium text-[13px] cursor-pointer mr-[15px] whitespace-nowrap"
+                    >
+                      <Image
+                        src="/events/link_icon.svg"
+                        alt="copy link"
+                        width={15}
+                        height={15}
+                        className="mr-[5px]"
+                      />
+                      Copy Link
+                    </button>
+                  )}
                   <button
                     id="event-menu"
                     aria-controls={open ? "event-menu" : undefined}
@@ -191,49 +203,57 @@ const EventList: React.FC<EventListProps> = ({
                       horizontal: "right",
                     }}
                   >
-                    {eventMenuItems.map((item) => (
-                      <MenuItem
-                        key={item.key}
-                        onClick={() => {
-                          if (item.key === "start") {
-                            if (menuState.eventId) {
-                              handleStartEvent(menuState.eventId);
+                    {eventMenuItems
+                      .filter((item) => {
+                        // Hide "start" menu item for ended events
+                        if (item.key === "start" && event.status === "ended") {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .map((item) => (
+                        <MenuItem
+                          key={item.key}
+                          onClick={() => {
+                            if (item.key === "start") {
+                              if (menuState.eventId) {
+                                handleStartEvent(menuState.eventId);
+                              }
+                            } else if (item.key === "delete") {
+                              if (menuState.eventId) {
+                                handleDeleteEvent(menuState.eventId);
+                              }
+                            } else if (item.key === "edit") {
+                              if (menuState.eventId) {
+                                handleEditEvent(menuState.eventId);
+                              }
                             }
-                          } else if (item.key === "delete") {
-                            if (menuState.eventId) {
-                              handleDeleteEvent(menuState.eventId);
-                            }
-                          } else if (item.key === "edit") {
-                            if (menuState.eventId) {
-                              handleEditEvent(menuState.eventId);
-                            }
-                          }
-                          handleClose();
-                        }}
-                        sx={{
-                          padding: "15px 15px",
-                          "&:hover": {
-                            backgroundColor: "#2686BE1A",
-                          },
-                        }}
-                      >
-                        <Box
+                            handleClose();
+                          }}
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            padding: "15px 15px",
+                            "&:hover": {
+                              backgroundColor: "#2686BE1A",
+                            },
                           }}
                         >
-                          <Image
-                            src={item.icon}
-                            alt={item.label}
-                            width={14}
-                            height={14}
-                            className="mr-2"
-                          />
-                          <span>{item.label}</span>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Image
+                              src={item.icon}
+                              alt={item.label}
+                              width={14}
+                              height={14}
+                              className="mr-2"
+                            />
+                            <span>{item.label}</span>
+                          </Box>
+                        </MenuItem>
+                      ))}
                   </Menu>
                 </div>
               </ListItem>

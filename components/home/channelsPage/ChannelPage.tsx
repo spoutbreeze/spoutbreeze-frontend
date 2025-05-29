@@ -17,6 +17,8 @@ import NavigateBeforeRoundedIcon from "@mui/icons-material/NavigateBeforeRounded
 import { useEventManagement } from "@/hooks/useEventManagement";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import { convertEventToCreateEventReq } from "@/utils/eventUtils";
+import { getChannelRecordings, ChannelRecordingsResponse } from "@/actions/recordings";
+import RecordingsTable from "@/components/common/RecordingsTable";
 
 interface ChannelPageProps {
   channel: ChannelWithUserName;
@@ -56,6 +58,12 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     events: [],
     total: 0,
   });
+  const [recordingsData, setRecordingsData] = React.useState<ChannelRecordingsResponse>({
+    recordings: [],
+    total_recordings: 0,
+  });
+  const [recordingsLoading, setRecordingsLoading] = React.useState(true);
+  const [recordingsError, setRecordingsError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showEventForm, setShowEventForm] = React.useState(false);
@@ -117,9 +125,26 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     }
   }, [channelId]);
 
+  // Add function to fetch recordings
+  const fetchRecordings = useCallback(async () => {
+    try {
+      setRecordingsLoading(true);
+      const data = await getChannelRecordings(channelId);
+      setRecordingsData(data);
+      setRecordingsError(null);
+    } catch (err) {
+      setRecordingsError("Failed to load recordings. Please try again later.");
+      console.error("Error fetching recordings:", err);
+    } finally {
+      setRecordingsLoading(false);
+    }
+  }, [channelId]);
+
+  // Update the useEffect to fetch both events and recordings
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    fetchRecordings();
+  }, [fetchEvents, fetchRecordings]);
 
   const handleCreateEvent = () => {
     setShowEventForm(true);
@@ -187,8 +212,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
             {channel.name}
           </button>
           <span className="font-medium text-[13px] text-[#5B5D60]">
-            333 Sessions | 22 Recordings{" "}
-            {/*change this later to make it dynamic*/}
+            {eventsData.total} Sessions | {recordingsData.total_recordings} Recordings
           </span>
         </div>
         <div>
@@ -239,11 +263,26 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
         )}
       </div>
 
-      {/* Recordings section */}
+      {/* Updated Recordings section */}
       <div className="flex flex-col mt-6 h-[calc(50vh-80px)] overflow-y-auto">
         <h1 className="text-[22px] text-[#262262] font-semibold mb-4 sticky top-0 bg-white pb-2 z-10">
-          Recordings
+          Recordings ({recordingsData.total_recordings})
         </h1>
+        
+        {recordingsData.recordings.length === 0 && !recordingsLoading && !recordingsError ? (
+          <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+            <p className="text-lg mb-2">No recordings found</p>
+            <p className="text-sm text-center">
+              Recordings will appear here after events are completed
+            </p>
+          </div>
+        ) : (
+          <RecordingsTable 
+            recordings={recordingsData.recordings}
+            loading={recordingsLoading}
+            error={recordingsError}
+          />
+        )}
       </div>
     </section>
   );

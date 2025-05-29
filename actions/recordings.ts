@@ -53,6 +53,11 @@ export interface GetRecordingRequest {
   meeting_id: string;
 }
 
+export interface ChannelRecordingsResponse {
+  recordings: Recording[];
+  total_recordings: number;
+}
+
 export const getRecordings = async (meetingId: string = ""): Promise<GetRecordingsResponse> => {
   try {
     const response = await axiosInstance.post("/api/bbb/get-recordings", {
@@ -61,6 +66,16 @@ export const getRecordings = async (meetingId: string = ""): Promise<GetRecordin
     return response.data;
   } catch (error) {
     console.error("Error fetching recordings:", error);
+    throw error;
+  }
+};
+
+export const getChannelRecordings = async (channelId: string): Promise<ChannelRecordingsResponse> => {
+  try {
+    const response = await axiosInstance.get(`/api/channels/${channelId}/recordings`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching channel recordings:", error);
     throw error;
   }
 };
