@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
   const [value, setValue] = React.useState(0);
   const [showEventForm, setShowEventForm] = React.useState(false);
 
-  let refreshUpcomingEvents: (() => void) | null = null; // ✅ Store the refresh function
+  let refreshUpcomingEvents: (() => void) | null = null; // Store the refresh function
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
