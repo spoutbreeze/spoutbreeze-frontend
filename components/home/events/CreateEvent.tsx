@@ -73,15 +73,6 @@ const CreateEvent: React.FC<EventFormProps> = ({
     timezone: eventToEdit ? eventToEdit.timezone : detectedTimezone,
     organizer_ids: eventToEdit ? eventToEdit.organizer_ids : [],
     channel_name: channel ? channel.name : "",
-    // title: "",
-    // description: "",
-    // occurs: "once",
-    // start_date: new Date(),
-    // end_date: new Date(),
-    // start_time: new Date(),
-    // timezone: detectedTimezone,
-    // organizer_ids: [],
-    // channel_name: channel ? channel.name : "",
   });
 
   // Fetch current user data
@@ -144,6 +135,21 @@ const CreateEvent: React.FC<EventFormProps> = ({
     if (formData.title.length < 3) {
       if (onError) {
         onError("Event title must be at least 3 characters long.");
+      }
+      return;
+    }
+
+    // Validate channel name
+    if (!formData.channel_name.trim()) {
+      if (onError) {
+        onError("Channel name is required.");
+      }
+      return;
+    }
+
+    if (formData.channel_name.length < 2) {
+      if (onError) {
+        onError("Channel name must be at least 2 characters long.");
       }
       return;
     }
@@ -356,7 +362,7 @@ const CreateEvent: React.FC<EventFormProps> = ({
           }}
         />
 
-        {/* Replace the channel name field with either a disabled field or dropdown */}
+        {/* Replace the existing channel selection with Autocomplete for better UX */}
         {channel ? (
           <TextField
             label="Channel Name"
@@ -369,25 +375,48 @@ const CreateEvent: React.FC<EventFormProps> = ({
             sx={{ mb: "20px" }}
           />
         ) : (
-          <FormControl fullWidth sx={{ mb: "20px" }}>
-            <InputLabel>Channel</InputLabel>
-            <Select
-              name="channel_name"
-              value={formData.channel_name}
-              label="Channel"
-              onChange={(e) => {
-                const { value } = e.target;
-                setFormData((prev) => ({ ...prev, channel_name: value }));
-              }}
-              required
-            >
-              {availableChannels.map((channel) => (
-                <MenuItem key={channel.id} value={channel.name}>
-                  {channel.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            fullWidth
+            freeSolo
+            options={availableChannels.map((channel) => channel.name)}
+            value={formData.channel_name}
+            onChange={(event, newValue) => {
+              setFormData((prev) => ({
+                ...prev,
+                channel_name: newValue || "",
+              }));
+            }}
+            onInputChange={(event, newInputValue) => {
+              setFormData((prev) => ({
+                ...prev,
+                channel_name: newInputValue,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Channel"
+                name="channel_name"
+                required
+                variant="outlined"
+                helperText="Select an existing channel or type a new channel name"
+                sx={{ mb: "20px" }}
+              />
+            )}
+            renderOption={(props, option) => {
+              const { key, ...otherProps } = props;
+              return (
+                <li key={key} {...otherProps}>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-500 mr-2">📁</span>
+                    {option}
+                  </div>
+                </li>
+              );
+            }}
+            noOptionsText="Type to create a new channel"
+            sx={{ mb: "20px" }}
+          />
         )}
 
         <div className="flex justify-end gap-4">
@@ -423,10 +452,13 @@ const CreateEvent: React.FC<EventFormProps> = ({
             }}
             disabled={loading}
           >
-            {loading 
-              ? (eventToEdit ? "Updating..." : "Creating...") 
-              : (eventToEdit ? "Update Event" : "Create Event")
-            }
+            {loading
+              ? eventToEdit
+                ? "Updating..."
+                : "Creating..."
+              : eventToEdit
+              ? "Update Event"
+              : "Create Event"}
           </Button>
         </div>
       </form>
