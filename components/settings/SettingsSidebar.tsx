@@ -29,7 +29,7 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   justifyContent: "flex-start",
   padding: "15px",
 
-  color: "#262262",
+  color: "black",
   "&.Mui-selected": {
     color: "#262262",
     "& .tab-content": {
