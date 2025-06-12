@@ -10,7 +10,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { formatTime, formatDate } from "@/utils/dateTimeFormatter";
-import { Events, JoinUrls } from "@/actions/events";
+import { Events } from "@/actions/events";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import JoinUrlDialog from "./JoinUrlDialog";
 // Import the LiveBadge component
@@ -44,7 +44,6 @@ const EventList: React.FC<EventListProps> = ({
   handleStartEvent,
   handleDeleteEvent,
   handleEditEvent,
-  handleGetJoinUrl,
 }) => {
   const open = Boolean(menuState.anchorEl);
   const { showSnackbar } = useGlobalSnackbar();

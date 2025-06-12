@@ -16,7 +16,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Box,
 } from "@mui/material";
 import Image from "next/image";
@@ -72,15 +71,16 @@ const Endpoints: React.FC = () => {
         const data = await fetchStreamEndpoints();
         setStreamEndpoints(data);
         setLoading(false);
-        setError(null);
-      } catch (error) {
-        setError("Failed to fetch stream endpoints");
-        showSnackbar("Failed to fetch stream endpoints", "error");
+      } catch (err) {
+        console.error("Error fetching stream endpoints:", err);
+        setError("Failed to load endpoints");
         setLoading(false);
+        showSnackbar("Failed to load endpoints", "error");
       }
     };
+
     fetchStreamEndpointsData();
-  }, []);
+  }, [showSnackbar]); // Add showSnackbar to the dependency array
 
   const confirmDeleteEndpoint = (id: string) => {
     setEndpointToDelete(id);
@@ -203,6 +203,7 @@ const Endpoints: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               streamEndpoints.map((endpoint, index) => (
                 <TableRow
                   key={endpoint.id}

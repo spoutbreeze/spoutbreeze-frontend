@@ -26,7 +26,7 @@ const Recordings: React.FC = () => {
       }
     };
     fetchRecordingsData();
-  }, []);
+  }, [showSnackbar]);
 
   return (
     <div className="px-10 pt-10 h-screen overflow-y-auto">

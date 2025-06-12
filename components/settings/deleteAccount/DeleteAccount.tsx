@@ -40,7 +40,7 @@ const DeleteAccount: React.FC = () => {
         <Typography variant="body1" className="mb-6 text-gray-700 leading-relaxed">
           Permanently deleting your account will remove all your data, your profile, 
           your channels, and any uploaded recordings. This action is irreversible, 
-          and you won't be able to recover your account or any associated information.
+          and you won&apos;t be able to recover your account or any associated information.
         </Typography>
         
         <Button 

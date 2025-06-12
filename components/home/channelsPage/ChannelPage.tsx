@@ -2,14 +2,9 @@
 
 import React, { useCallback, useEffect } from "react";
 import { ChannelWithUserName } from "@/actions/channels";
-import Button from "@mui/material/Button";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   fetchEventsByChannelId,
-  startEvent,
-  Organizers,
   Events,
-  Event,
 } from "@/actions/events";
 import CreateEvent from "@/components/home/events/CreateEvent";
 import EventList from "../events/EventList";
@@ -73,9 +68,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
 
   // Use the custom hook with callbacks
   const {
-    eventError,
     menuState,
-    open,
     handleClick,
     handleClose,
     handleStartEvent,
@@ -123,7 +116,7 @@ const ChannelPage: React.FC<ChannelPageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [channelId]);
+  }, [channelId, showSnackbar]);
 
   // Add function to fetch recordings
   const fetchRecordings = useCallback(async () => {

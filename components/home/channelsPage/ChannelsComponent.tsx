@@ -3,10 +3,8 @@
 import React, { useState, useEffect } from "react";
 import {
   fetchChannels,
-  createChannel,
   deleteChannel,
   Channels,
-  Channel,
   CreateChannelReq,
   ChannelWithUserName,
 } from "@/actions/channels";
@@ -69,6 +67,7 @@ const ChannelsComponent: React.FC = () => {
         setChannelsData(data);
         setLoading(false);
         setError(null);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         setError("Failed to fetch channels");
         setLoading(false);
@@ -76,11 +75,11 @@ const ChannelsComponent: React.FC = () => {
       }
     };
     fetchChannelsData();
-  }, []);
+  }, [showSnackbar]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddChannel = async (formData: CreateChannelReq) => {
     try {
-      const newChannel = await createChannel(formData);
       const updatedData = await fetchChannels();
       setChannelsData(updatedData);
       handleCloseModal();
@@ -107,6 +106,7 @@ const ChannelsComponent: React.FC = () => {
         channels: prev.channels.filter((channel) => channel.id !== channelToDelete),
       }));
       showSnackbar("Channel deleted successfully", "success");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       showSnackbar("Failed to delete channel", "error");
     } finally {

@@ -32,6 +32,7 @@ const JoinEventPage: React.FC = () => {
       } else {
         setError('Failed to get join URL');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message === 'EVENT_NOT_FOUND') {
         setError('Event not found');

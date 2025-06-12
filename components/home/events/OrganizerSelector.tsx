@@ -13,7 +13,6 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import { User, fetchUsers } from "@/actions/fetchUsers";
 import { stringToColor } from "@/utils/userAvatarColor";
-import { Organizers } from "@/actions/events";
 
 interface OrganizerSelectorProps {
   organizer_ids: string[];

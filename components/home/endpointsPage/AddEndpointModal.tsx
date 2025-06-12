@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import { createStreamEndpointReq } from "@/actions/streamEndpoints";
-import { EndpointWithUserName } from "./Endpoints";
+import { StreamEndpointWithUserName } from "@/actions/streamEndpoints";
 
 interface AddEndpointModalProps {
   open: boolean;
@@ -16,7 +14,7 @@ interface AddEndpointModalProps {
   onAdd: (fromData: createStreamEndpointReq) => void;
   onUpdate?: (id: string, fromData: createStreamEndpointReq) => void;
   isEditing?: boolean;
-  currentEndpoint?: EndpointWithUserName | null;
+  currentEndpoint?: StreamEndpointWithUserName | null;
 }
 
 const AddEndpointModal: React.FC<AddEndpointModalProps> = ({

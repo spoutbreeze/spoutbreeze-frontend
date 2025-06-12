@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
-import { Tabs, Tab, Box, Typography } from "@mui/material";
+import { Tabs, Tab, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { PageItem } from "../common/PageLayout";

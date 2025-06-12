@@ -5,7 +5,6 @@ import { eventMenuItems } from "../channelsPage/ChannelPage";
 import { useEventManagement } from "@/hooks/useEventManagement";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import CreateEvent from "../events/CreateEvent";
-import { CreateEventReq } from "@/actions/events";
 import { convertEventToCreateEventReq } from "@/utils/eventUtils";
 
 interface EventsTabProps {
@@ -85,7 +84,7 @@ const EventsTab: React.FC<EventsTabProps> = ({
 
   React.useEffect(() => {
     fetchEventsData();
-  }, []);
+  }, [fetchEventsData]);
 
   // Expose refresh function to parent
   React.useEffect(() => {

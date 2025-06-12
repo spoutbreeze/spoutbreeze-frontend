@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { createEvent, CreateEventReq, Event } from "@/actions/events";
+import { createEvent, CreateEventReq } from "@/actions/events";
 import { ChannelWithUserName, fetchChannels } from "@/actions/channels";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   FormControl,
   InputLabel,
