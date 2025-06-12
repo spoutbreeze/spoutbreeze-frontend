@@ -1,15 +1,14 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   fetchStreamEndpoints,
-  StreamEndpoints,
+  StreamEndpointWithUserName,
   createStreamEndpoint,
   createStreamEndpointReq,
   deleteStreamEndpoint,
   updateStreamEndpoint,
 } from "@/actions/streamEndpoints";
-import { fetchUserById, User } from "@/actions/fetchUsers";
 import {
   Table,
   TableBody,
@@ -25,20 +24,16 @@ import AddEndpointModal from "./AddEndpointModal";
 import DeleteConfirmationDialog from "@/components/common/DeleteConfirmationDialog";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 
-export interface EndpointWithUserName extends StreamEndpoints {
-  userName: string;
-}
-
 const Endpoints: React.FC = () => {
   const [streamEndpoints, setStreamEndpoints] = React.useState<
-    EndpointWithUserName[]
+    StreamEndpointWithUserName[]
   >([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [openModal, setOpenModal] = React.useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentEndpoint, setCurrentEndpoint] =
-    useState<EndpointWithUserName | null>(null);
+    useState<StreamEndpointWithUserName | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [endpointToDelete, setEndpointToDelete] = useState<string | null>(null);
@@ -59,19 +54,10 @@ const Endpoints: React.FC = () => {
     try {
       await createStreamEndpoint(formData);
 
+      // Refresh the endpoints list
       const data = await fetchStreamEndpoints();
+      setStreamEndpoints(data);
 
-      const endpointsWithUserName = await Promise.all(
-        data.map(async (endpoint) => {
-          const user = await fetchUserById(endpoint.user_id || "");
-          return {
-            ...endpoint,
-            userName: user ? `${user.first_name} ${user.last_name}` : "Unknown",
-          };
-        })
-      );
-
-      setStreamEndpoints(endpointsWithUserName);
       handleCloseModal();
       showSnackbar("Endpoint created successfully", "success");
     } catch (error) {
@@ -84,19 +70,9 @@ const Endpoints: React.FC = () => {
     const fetchStreamEndpointsData = async () => {
       try {
         const data = await fetchStreamEndpoints();
-        const endpointsWithUserName: EndpointWithUserName[] = await Promise.all(
-          data.map(async (endpoint) => {
-            const user = await fetchUserById(endpoint.user_id || "");
-            return {
-              ...endpoint,
-              userName: user
-                ? `${user.first_name} ${user.last_name}`
-                : "Unknown",
-            };
-          })
-        );
-        setStreamEndpoints(endpointsWithUserName);
+        setStreamEndpoints(data);
         setLoading(false);
+        setError(null);
       } catch (error) {
         setError("Failed to fetch stream endpoints");
         showSnackbar("Failed to fetch stream endpoints", "error");

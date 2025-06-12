@@ -18,6 +18,8 @@ export interface Event {
   end_date: string;
   start_time: string;
   creator_id: string;
+  creator_first_name: string;
+  creator_last_name: string;
   organizers: Organizers[];
   channel_id: string;
   meeting_id: string | null;
@@ -27,13 +29,17 @@ export interface Event {
   timezone: string;
   created_at: string;
   updated_at: string;
-  status: "scheduled" | "live" | "ended" | "cancelled"; // Add status field
-  actual_start_time: string | null; // Add actual_start_time
-  actual_end_time: string | null; // Add actual_end_time
+  status: "scheduled" | "live" | "ended" | "cancelled";
+  actual_start_time: string | null;
+  actual_end_time: string | null;
+}
+
+export interface EventWithUserName extends Event {
+  creator_name: string;
 }
 
 export interface Events {
-  events: Event[];
+  events: EventWithUserName[];
   total: number;
 }
 
@@ -56,9 +62,21 @@ export interface JoinUrls {
 
 export const fetchEvents = async (): Promise<Events> => {
   try {
-
     const response = await axiosInstance.get("/api/events/all");
-    return response.data;
+    console.log("Fetch events response:", response.data);
+
+    // Transform the response to include creator_name
+    const eventsWithUserName: EventWithUserName[] = response.data.events.map(
+      (event: Event) => ({
+        ...event,
+        creator_name: `${event.creator_first_name} ${event.creator_last_name}`,
+      })
+    );
+
+    return {
+      events: eventsWithUserName,
+      total: response.data.total,
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
@@ -77,9 +95,21 @@ export const fetchEvents = async (): Promise<Events> => {
 
 export const fetchEventsByChannelId = async (channelId: string): Promise<Events> => {
   try {
-
     const response = await axiosInstance.get(`/api/events/channel/${channelId}`);
-    return response.data;
+    console.log("Fetch events by channel response:", response.data);
+
+    // Transform the response to include creator_name
+    const eventsWithUserName: EventWithUserName[] = response.data.events.map(
+      (event: Event) => ({
+        ...event,
+        creator_name: `${event.creator_first_name} ${event.creator_last_name}`,
+      })
+    );
+
+    return {
+      events: eventsWithUserName,
+      total: response.data.total,
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
@@ -98,10 +128,21 @@ export const fetchEventsByChannelId = async (channelId: string): Promise<Events>
 
 export const fetchUpcmingEvents = async (): Promise<Events> => {
   try {
-
-
     const response = await axiosInstance.get("/api/events/upcoming");
-    return response.data;
+    console.log("Fetch upcoming events response:", response.data);
+
+    // Transform the response to include creator_name
+    const eventsWithUserName: EventWithUserName[] = response.data.events.map(
+      (event: Event) => ({
+        ...event,
+        creator_name: `${event.creator_first_name} ${event.creator_last_name}`,
+      })
+    );
+
+    return {
+      events: eventsWithUserName,
+      total: response.data.total,
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
@@ -120,10 +161,21 @@ export const fetchUpcmingEvents = async (): Promise<Events> => {
 
 export const fetchPastEvents = async (): Promise<Events> => {
   try {
-
-
     const response = await axiosInstance.get("/api/events/past");
-    return response.data;
+    console.log("Fetch past events response:", response.data);
+
+    // Transform the response to include creator_name
+    const eventsWithUserName: EventWithUserName[] = response.data.events.map(
+      (event: Event) => ({
+        ...event,
+        creator_name: `${event.creator_first_name} ${event.creator_last_name}`,
+      })
+    );
+
+    return {
+      events: eventsWithUserName,
+      total: response.data.total,
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
@@ -142,8 +194,6 @@ export const fetchPastEvents = async (): Promise<Events> => {
 
 export const createEvent = async (data: CreateEventReq): Promise<Event | null> => {
   try {
-
-    
     const response = await axiosInstance.post("/api/events/", data);
     return response.data;
   } catch (error) {
@@ -182,11 +232,8 @@ export const createEvent = async (data: CreateEventReq): Promise<Event | null> =
   }
 };
 
-// Fucntion to start an event, it will return the join url
 export const startEvent = async (eventId: string): Promise<string | null> => {
   try {
-
-
     const response = await axiosInstance.post(`/api/events/${eventId}/start`);
     return response.data.join_url;
   } catch (error) {
@@ -197,8 +244,6 @@ export const startEvent = async (eventId: string): Promise<string | null> => {
 
 export const updateEvent = async (eventId: string, data: Partial<CreateEventReq>): Promise<Event | null> => {
   try {
-
-
     const response = await axiosInstance.put(`/api/events/${eventId}`, data);
     return response.data;
   } catch (error) {
@@ -225,8 +270,6 @@ export const updateEvent = async (eventId: string, data: Partial<CreateEventReq>
 
 export const getJoinUrl = async (eventId: string): Promise<JoinUrls | null> => {
   try {
-
-
     const response = await axiosInstance.post(`/api/events/${eventId}/join-url`);
     return response.data;
   } catch (error) {
@@ -250,15 +293,12 @@ export const getJoinUrl = async (eventId: string): Promise<JoinUrls | null> => {
   }
 };
 
-// New function to get join URL with user's name (no auth required for public join)
 export const getJoinUrlWithName = async (eventId: string, fullName: string, role: 'attendee' | 'moderator' = 'attendee'): Promise<string | null> => {
   try {
-    // Create a request without auth headers
     const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/join-url`, {
       full_name: fullName
     });
     
-    // Return the appropriate URL based on role
     return role === 'moderator' ? response.data.moderator_join_url : response.data.attendee_join_url;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -283,8 +323,6 @@ export const getJoinUrlWithName = async (eventId: string, fullName: string, role
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
-
-
     await axiosInstance.delete(`/api/events/${eventId}`);
   } catch (error) {
     if (axios.isAxiosError(error)) {

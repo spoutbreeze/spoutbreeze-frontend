@@ -10,7 +10,6 @@ import {
   CreateChannelReq,
   ChannelWithUserName,
 } from "@/actions/channels";
-import { fetchUserById } from "@/actions/fetchUsers";
 
 import Image from "next/image";
 import ChannelPage from "./ChannelPage";
@@ -54,7 +53,6 @@ const ChannelsComponent: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [channelToDelete, setChannelToDelete] = useState<string | null>(null);
 
-  // Replace the useSnackbar hook:
   const { showSnackbar } = useGlobalSnackbar();
 
   const handleOpenModal = () => {
@@ -68,20 +66,7 @@ const ChannelsComponent: React.FC = () => {
     const fetchChannelsData = async () => {
       try {
         const data = await fetchChannels();
-
-        // Add user names to channels
-        const channelsWithUserName = await Promise.all(
-          data.channels.map(async (channel) => {
-            const user = await fetchUserById(channel.creator_id || "");
-            return {
-              ...channel,
-              creator_name: user
-                ? `${user.first_name} ${user.last_name}`
-                : "Unknown",
-            };
-          })
-        );
-        setChannelsData({ channels: channelsWithUserName, total: data.total });
+        setChannelsData(data);
         setLoading(false);
         setError(null);
       } catch (error) {
@@ -95,26 +80,13 @@ const ChannelsComponent: React.FC = () => {
 
   const handleAddChannel = async (formData: CreateChannelReq) => {
     try {
-      await createChannel(formData);
-
-      const data = await fetchChannels();
-
-      // Add user names to channels
-      const channelsWithUserName = await Promise.all(
-        data.channels.map(async (channel) => {
-          const user = await fetchUserById(channel.creator_id || "");
-          return {
-            ...channel,
-            creator_name: user
-              ? `${user.first_name} ${user.last_name}`
-              : "Unknown",
-          };
-        })
-      );
-      setChannelsData({ channels: channelsWithUserName, total: data.total });
+      const newChannel = await createChannel(formData);
+      const updatedData = await fetchChannels();
+      setChannelsData(updatedData);
       handleCloseModal();
       showSnackbar("Channel created successfully", "success");
     } catch (error) {
+      console.error("Error creating channel:", error);
       showSnackbar("Failed to create channel", "error");
     }
   };

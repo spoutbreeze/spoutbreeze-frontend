@@ -8,6 +8,12 @@ export interface StreamEndpoints {
   created_at?: string;
   updated_at?: string;
   user_id?: string;
+  user_first_name: string;
+  user_last_name: string;
+}
+
+export interface StreamEndpointWithUserName extends StreamEndpoints {
+  userName: string;
 }
 
 export interface createStreamEndpointReq {
@@ -16,11 +22,20 @@ export interface createStreamEndpointReq {
   stream_key: string;
 }
 
-export const fetchStreamEndpoints = async (): Promise<StreamEndpoints[]> => {
+export const fetchStreamEndpoints = async (): Promise<StreamEndpointWithUserName[]> => {
   try {
-
     const response = await axiosInstance.get("/api/stream-endpoint/");
-    return response.data;
+    console.log("Fetch stream endpoints response:", response.data);
+
+    // Transform the response to include userName
+    const endpointsWithUserName: StreamEndpointWithUserName[] = response.data.map(
+      (endpoint: StreamEndpoints) => ({
+        ...endpoint,
+        userName: `${endpoint.user_first_name} ${endpoint.user_last_name}`,
+      })
+    );
+
+    return endpointsWithUserName;
   } catch (error) {
     console.error("Error fetching stream endpoints:", error);
     throw error;
@@ -29,9 +44,8 @@ export const fetchStreamEndpoints = async (): Promise<StreamEndpoints[]> => {
 
 export const createStreamEndpoint = async (
   data: createStreamEndpointReq
-): Promise<createStreamEndpointReq[]> => {
+): Promise<StreamEndpoints> => {
   try {
-
     const response = await axiosInstance.post(
       "/api/stream-endpoint/create",
       data
@@ -45,7 +59,6 @@ export const createStreamEndpoint = async (
 
 export const deleteStreamEndpoint = async (id: string): Promise<void> => {
   try {
-
     await axiosInstance.delete(`/api/stream-endpoint/${id}`);
   } catch (error) {
     console.error("Error deleting stream endpoint:", error);
@@ -56,9 +69,8 @@ export const deleteStreamEndpoint = async (id: string): Promise<void> => {
 export const updateStreamEndpoint = async (
   id: string,
   data: createStreamEndpointReq
-): Promise<createStreamEndpointReq[]> => {
+): Promise<StreamEndpoints> => {
   try {
-
     const response = await axiosInstance.put(
       `/api/stream-endpoint/${id}`,
       data
@@ -68,5 +80,5 @@ export const updateStreamEndpoint = async (
     console.error("Error updating stream endpoint:", error);
     throw error;
   }
-}
+};
 
