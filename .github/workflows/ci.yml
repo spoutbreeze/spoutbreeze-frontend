@@ -24,9 +24,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-          
-      - name: Debug environment file
-        run: cat .env.local
 
       - name: Run ESLint (if ESLint is installed)
         run: npm run lint || echo "Skipping ESLint check"
