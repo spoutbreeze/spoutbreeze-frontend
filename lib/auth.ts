@@ -3,6 +3,7 @@ import {
   KEYCLOAK_REALM,
   KEYCLOAK_CLIENT_ID,
   KEYCLOAK_REDIRECT_URI,
+  NEXT_PUBLIC_API_URL,
 } from "@/config";
 import { generateCodeVerifier, generateCodeChallenge } from "./pkce";
 
@@ -38,7 +39,7 @@ export const exchangeCodeForToken = async (code: string) => {
   }
 
   // Backend will set httpOnly cookies
-  const response = await fetch("http://localhost:8000/api/token", {
+  const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include", // Important: include cookies
@@ -68,7 +69,7 @@ export const clearTokens = () => {
 
 export const refreshToken = async () => {
   try {
-    const response = await fetch("http://localhost:8000/api/refresh", {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", // Include cookies

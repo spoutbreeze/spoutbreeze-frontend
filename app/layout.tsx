@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body className={`${montserrat.className} flex flex-col min-h-screen mx-auto max-w-screen-container`}>
         <ClientThemeProvider>
           <nav>
-            <Navbar />
+            <Suspense fallback={<div className="h-[80px] bg-white border-b border-[#E0E5EC]"></div>}>
+              <Navbar />
+            </Suspense>
           </nav>
           <main className="pt-[80px]">
             <SnackbarProvider>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { exchangeCodeForToken } from "@/lib/auth";
 
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -29,4 +29,12 @@ export default function CallbackPage() {
   }
 
   return <div className="p-4">Authenticating...</div>;
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <CallbackContent />
+    </Suspense>
+  );
 }

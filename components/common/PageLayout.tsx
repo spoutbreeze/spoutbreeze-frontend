@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import ContentDisplay from "../home/ContentDisplay";
@@ -25,13 +25,13 @@ interface PageLayoutProps {
   className?: string;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({
+function PageLayoutContent({
   items,
   defaultSection,
   sectionParam = "section",
   sidebarComponent: SidebarComponent,
   className = "bg-[#F6F6F6] min-h-screen pb-10",
-}) => {
+}: PageLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -77,6 +77,14 @@ const PageLayout: React.FC<PageLayoutProps> = ({
         </Grid>
       </Box>
     </section>
+  );
+}
+
+const PageLayout: React.FC<PageLayoutProps> = (props) => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageLayoutContent {...props} />
+    </Suspense>
   );
 };
 
