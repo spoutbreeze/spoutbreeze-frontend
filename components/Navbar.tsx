@@ -8,7 +8,7 @@ import Avatar from "@mui/material/Avatar";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import { getLoginUrl } from "@/lib/auth";
-import { User, fetchCurrentUser } from "@/actions/fetchUsers";
+import { User, fetchCurrentUser, getPrimaryRole } from "@/actions/fetchUsers";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { stringToColor } from "@/utils/userAvatarColor";
 import Menu from "@mui/material/Menu";
@@ -149,7 +149,7 @@ const Navbar: React.FC = () => {
                   {user.first_name} {user.last_name}
                 </span>
                 <span className="text-[13px] font-medium text-[#5B5D60]">
-                  Admin
+                  {getPrimaryRole(user)}
                 </span>
               </div>
             </Stack>
@@ -211,7 +211,7 @@ const Navbar: React.FC = () => {
                       color="text.secondary"
                       sx={{ fontSize: "13px" }}
                     >
-                      {user.email || "foulenfalteli@blasa.bled"}
+                      {user.email}
                     </Typography>
                   </Box>
                 </Box>

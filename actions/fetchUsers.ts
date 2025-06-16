@@ -8,7 +8,47 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  keycloak_id: string;
+  roles: string;
+  created_at: string;
+  is_active: boolean;
 }
+
+// Helper functions to work with roles
+export const getUserRoles = (user: User): string[] => {
+  if (!user.roles) return [];
+  return user.roles.split(',').map(role => role.trim()).filter(role => role);
+};
+
+export const hasRole = (user: User, role: string): boolean => {
+  const roles = getUserRoles(user);
+  return roles.includes(role);
+};
+
+export const hasAnyRole = (user: User, ...roles: string[]): boolean => {
+  const userRoles = getUserRoles(user);
+  return roles.some(role => userRoles.includes(role));
+};
+
+export const isAdmin = (user: User): boolean => {
+  return hasRole(user, 'admin');
+};
+
+export const isModerator = (user: User): boolean => {
+  return hasRole(user, 'moderator');
+};
+
+export const getPrimaryRole = (user: User): string => {
+  const roles = getUserRoles(user);
+  if (roles.length === 0) return 'User';
+  
+  // Prioritize roles based on hierarchy
+  if (roles.includes('admin')) return 'Admin';
+  if (roles.includes('moderator')) return 'Moderator';
+  
+  // Return the first role if no priority roles found
+  return roles[0].charAt(0).toUpperCase() + roles[0].slice(1);
+};
 
 export const fetchCurrentUser = async (): Promise<User | null> => {
   try {
