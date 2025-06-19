@@ -68,9 +68,9 @@ const ChannelsComponent: React.FC = () => {
         const data = await fetchChannels();
         setChannelsData(data);
         setError(null);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Handle 404 error specifically (no channels found)
-        if (error.message === "NO_CHANNELS_FOUND") {
+        if (error instanceof Error && error.message === "NO_CHANNELS_FOUND") {
           setChannelsData({ channels: [], total: 0 });
           setError(null);
           showSnackbar("No channels found", "info");
@@ -86,7 +86,6 @@ const ChannelsComponent: React.FC = () => {
     fetchChannelsData();
   }, [showSnackbar]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddChannel = async (formData: CreateChannelReq) => {
     try {
       // Actually create the channel first
@@ -119,8 +118,8 @@ const ChannelsComponent: React.FC = () => {
         channels: prev.channels.filter((channel) => channel.id !== channelToDelete),
       }));
       showSnackbar("Channel deleted successfully", "success");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error("Error deleting channel:", error);
       showSnackbar("Failed to delete channel", "error");
     } finally {
       closeDeleteDialog();
@@ -178,7 +177,7 @@ const ChannelsComponent: React.FC = () => {
           />
           <p className="text-lg mb-2">No channels found</p>
           <p className="text-sm text-center mb-4">
-            You haven't created any channel yet.
+            You haven&apos;t created any channel yet.
           </p>
           <button
             onClick={handleOpenModal}

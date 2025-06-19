@@ -144,13 +144,20 @@ const AccountInfo: React.FC = () => {
         message: "Profile updated successfully",
         severity: "success"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update profile:", error);
       
       let errorMessage = "Failed to update profile";
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.message) {
+      
+      // Type guard for axios error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string };
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
       

@@ -67,13 +67,20 @@ const AccessControl: React.FC = () => {
       );
       
       showSnackbar("User role updated successfully", "success");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update user role:", error);
       
       let errorMessage = "Failed to update user role";
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.message) {
+      
+      // Type guard for axios error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string };
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
       
