@@ -13,7 +13,7 @@ import { formatTime, formatDate } from "@/utils/dateTimeFormatter";
 import { Events } from "@/actions/events";
 import { useGlobalSnackbar } from "@/contexts/SnackbarContext";
 import JoinUrlDialog from "./JoinUrlDialog";
-// Import the LiveBadge component
+
 import LiveBadge from "@/components/common/LiveBadge";
 
 interface EventListProps {

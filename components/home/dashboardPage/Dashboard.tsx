@@ -4,6 +4,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Button from "@mui/material/Button";
 import PastEventList from "./PastEventList";
+import LiveEventList from "./LiveEventList";
 import { fetchUpcmingEvents } from "@/actions/events";
 import CreateEvent from "@/components/home/events/CreateEvent";
 import { useGlobalSnackbar } from '@/contexts/SnackbarContext';
@@ -128,8 +129,13 @@ const Dashboard: React.FC = () => {
               sx={{ fontSize: "14px", fontWeight: 500 }}
             />
             <Tab
-              label="Past events"
+              label="Live events"
               {...a11yProps(1)}
+              sx={{ fontSize: "14px", fontWeight: 500 }}
+            />
+            <Tab
+              label="Past events"
+              {...a11yProps(2)}
               sx={{ fontSize: "14px", fontWeight: 500 }}
             />
           </Tabs>
@@ -162,6 +168,9 @@ const Dashboard: React.FC = () => {
           />
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
+          <LiveEventList />
+        </CustomTabPanel>
+        <CustomTabPanel value={value} index={2}>
           <PastEventList />
         </CustomTabPanel>
       </div>

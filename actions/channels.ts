@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import axios from "axios";
 
 export interface Channel {
   id: string;
@@ -41,7 +42,18 @@ export const fetchChannels = async (): Promise<Channels> => {
       total: response.data.total,
     };
   } catch (error) {
-    console.error("Error fetching channels:", error);
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+
+      if (status === 404) {
+        // Return empty channels instead of throwing error
+        throw new Error("NO_CHANNELS_FOUND");
+      }
+
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
     throw error;
   }
 };
