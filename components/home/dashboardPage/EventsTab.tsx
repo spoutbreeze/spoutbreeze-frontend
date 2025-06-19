@@ -136,7 +136,6 @@ const EventsTab: React.FC<EventsTabProps> = ({
     );
   }
 
-  // Add empty state check in the return statement
   return (
     <>
       {!loading && !error && eventsData.events.length === 0 ? (

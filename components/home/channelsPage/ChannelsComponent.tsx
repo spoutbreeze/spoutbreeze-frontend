@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   fetchChannels,
   deleteChannel,
+  createChannel, // Add this import
   Channels,
   CreateChannelReq,
   ChannelWithUserName,
@@ -63,23 +64,34 @@ const ChannelsComponent: React.FC = () => {
   useEffect(() => {
     const fetchChannelsData = async () => {
       try {
+        setLoading(true);
         const data = await fetchChannels();
         setChannelsData(data);
-        setLoading(false);
         setError(null);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        setError("Failed to fetch channels");
+      } catch (error: unknown) {
+        // Handle 404 error specifically (no channels found)
+        if (error instanceof Error && error.message === "NO_CHANNELS_FOUND") {
+          setChannelsData({ channels: [], total: 0 });
+          setError(null);
+          showSnackbar("No channels found", "info");
+        } else {
+          setError("Failed to fetch channels");
+          showSnackbar("Failed to fetch channels", "error");
+        }
+        console.error("Error fetching channels:", error);
+      } finally {
         setLoading(false);
-        showSnackbar("Failed to fetch channels", "error");
       }
     };
     fetchChannelsData();
   }, [showSnackbar]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddChannel = async (formData: CreateChannelReq) => {
     try {
+      // Actually create the channel first
+      await createChannel(formData);
+      
+      // Then fetch the updated channels list
       const updatedData = await fetchChannels();
       setChannelsData(updatedData);
       handleCloseModal();
@@ -106,8 +118,8 @@ const ChannelsComponent: React.FC = () => {
         channels: prev.channels.filter((channel) => channel.id !== channelToDelete),
       }));
       showSnackbar("Channel deleted successfully", "success");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error("Error deleting channel:", error);
       showSnackbar("Failed to delete channel", "error");
     } finally {
       closeDeleteDialog();
@@ -138,7 +150,7 @@ const ChannelsComponent: React.FC = () => {
   }
 
   return (
-    <section className="px-10 pt-10 h-screen overflow-y-auto">
+    <section className="px-10 pt-10 h-screen flex flex-col">
       <div className="flex items-center justify-between">
         <h1 className="text-[18px] font-medium text-black mb-[20px]">
           Channels
@@ -150,39 +162,64 @@ const ChannelsComponent: React.FC = () => {
           + Create a channel
         </button>
       </div>
-      {loading && <p>Loading...</p>}
-      {error && <p>{error}</p>}
-      {!loading && !error && (
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {channelsData.channels.map((channel) => (
-            <div
-              key={channel.id}
-              className="h-[110px] rounded-[10px] relative cursor-pointer"
-              style={{ backgroundColor: getRandomColor(channel.id) }}
-              onClick={() => handleChannelClick(channel)}
-            >
-              <div className="flex flex-col h-full text-white p-[15px]">
-                <span className="text-lg font-semibold mb-auto">
-                  {channel.name}
-                </span>
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] font-medium">
-                    Created by {channel.creator_name}
+      
+      {loading && <div className="flex-1 flex items-center justify-center"><p>Loading...</p></div>}
+      {error && <div className="flex-1 flex items-center justify-center"><p className="text-red-500">{error}</p></div>}
+      
+      {!loading && !error && channelsData.channels.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+          <Image
+            src="/empty_icon.svg"
+            alt="No channels"
+            width={96}
+            height={71}
+            className="mb-4 opacity-50"
+          />
+          <p className="text-lg mb-2">No channels found</p>
+          <p className="text-sm text-center mb-4">
+            You haven&apos;t created any channel yet.
+          </p>
+          <button
+            onClick={handleOpenModal}
+            className="px-4 py-2 bg-[#27AAFF] text-white rounded-[2px] font-medium hover:bg-[#2686BE] transition-colors"
+          >
+            Create a Channel
+          </button>
+        </div>
+      ) : (
+        !loading && !error && (
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {channelsData.channels.map((channel) => (
+              <div
+                key={channel.id}
+                className="h-[110px] rounded-[10px] relative cursor-pointer"
+                style={{ backgroundColor: getRandomColor(channel.id) }}
+                onClick={() => handleChannelClick(channel)}
+              >
+                <div className="flex flex-col h-full text-white p-[15px]">
+                  <span className="text-lg font-semibold mb-auto">
+                    {channel.name}
                   </span>
-                  <Image
-                    src="/delete_icon_outlined_white.svg"
-                    alt="Delete Channel"
-                    width={15}
-                    height={16}
-                    className="cursor-pointer"
-                    onClick={(e) => confirmDeleteChannel(channel.id, e)}
-                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-[12px] font-medium">
+                      Created by {channel.creator_name}
+                    </span>
+                    <Image
+                      src="/delete_icon_outlined_white.svg"
+                      alt="Delete Channel"
+                      width={15}
+                      height={16}
+                      className="cursor-pointer"
+                      onClick={(e) => confirmDeleteChannel(channel.id, e)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
+      
       {/* The confirmation dialog */}
       <DeleteConfirmationDialog
         open={deleteDialogOpen}

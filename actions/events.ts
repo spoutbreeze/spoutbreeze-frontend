@@ -192,6 +192,39 @@ export const fetchPastEvents = async (): Promise<Events> => {
   }
 };
 
+export const fetchLiveEvents = async (): Promise<Events> => {
+  try {
+    const response = await axiosInstance.get("/api/events/live");
+    console.log("Fetch live events response:", response.data);
+
+    // Transform the response to include creator_name
+    const eventsWithUserName: EventWithUserName[] = response.data.events.map(
+      (event: Event) => ({
+        ...event,
+        creator_name: `${event.creator_first_name} ${event.creator_last_name}`,
+      })
+    );
+
+    return {
+      events: eventsWithUserName,
+      total: response.data.total,
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      
+      if (status === 404) {
+        return { events: [], total: 0 };
+      }
+      
+      if (status === 500) {
+        throw new Error("SERVER_ERROR");
+      }
+    }
+    throw error;
+  }
+};
+
 export const createEvent = async (data: CreateEventReq): Promise<Event | null> => {
   try {
     const response = await axiosInstance.post("/api/events/", data);
