@@ -31,7 +31,7 @@ const FeaturesSection: React.FC = () => {
             <Image
               src="/homePage/space_icon.svg"
               alt="Feature 1"
-              width={65}
+              width={95}
               height={80}
               className="mb-5 mx-auto"
             />
