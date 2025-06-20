@@ -1,3 +1,17 @@
-<svg width="65" height="80" viewBox="0 0 65 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M32.5013 0C14.5522 0 0 14.7041 0 32.8411V80H65V32.8411C64.9998 14.7041 50.4478 0 32.5013 0ZM17.9173 53.8938C14.4645 53.8938 11.6685 51.0667 11.6685 47.5792C11.6685 44.09 14.4645 41.263 17.9173 41.263C21.37 41.263 24.1659 44.09 24.1659 47.5792C24.1659 51.0667 21.37 53.8938 17.9173 53.8938Z" fill="#27AAFF"/>
+<svg width="97" height="82" viewBox="0 0 97 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M60.07 6.32001V44.13L71.89 49.44V11.64L60.07 6.32001Z" fill="#BEE6FF"/>
+<path d="M83.7 16.95V54.76L95.51 60.08V22.27L83.7 16.95Z" fill="#BEE6FF"/>
+<path d="M48.26 1V38.81L1 60.07V24.56C1 23.17 1.82 21.9 3.09 21.33L48.26 1Z" fill="#BEE6FF"/>
+<path d="M12.81 54.75L24.62 49.44L35.19 54.2L23.38 59.51L12.81 54.75Z" fill="#BEE6FF"/>
+<path d="M47.01 48.88L58.75 43.53L48.26 38.81L36.44 44.12L47.01 48.88Z" fill="#BEE6FF"/>
+<path d="M35.19 54.2L47.01 48.88L58.75 54.16L46.97 59.5L35.19 54.2Z" fill="#BEE6FF"/>
+<path d="M11.63 64.8L23.38 59.51L35.14 64.8L23.45 70.12L11.63 64.8Z" fill="#BEE6FF"/>
+<path d="M58.83 64.83L46.97 59.5L35.14 64.8L46.97 70.17L58.83 64.83Z" fill="#BEE6FF"/>
+<path d="M58.75 54.16L70.7 48.85L82.53 54.17L70.61 59.5L58.75 54.16Z" fill="#BEE6FF"/>
+<path d="M83.7 65.39L70.61 59.5L58.83 64.83L71.89 70.71L83.7 65.39Z" fill="#BEE6FF"/>
+<path d="M46.97 70.17L35.26 75.44L48.26 81L60.07 76.03L46.97 70.17Z" fill="#BEE6FF"/>
+<path d="M95.51 60.08L49.71 80.69C48.79 81.11 47.73 81.11 46.8 80.69L1 60.08" stroke="#27AAFF" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M48.26 1V38.81L1 60.07V24.56C1 23.17 1.82 21.9 3.09 21.33L48.26 1Z" stroke="#27AAFF" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M48.26 1.01001L93.43 21.34C94.7 21.91 95.52 23.18 95.52 24.57V60.08" stroke="#27AAFF" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M48.26 38.81L95.51 60.08" stroke="#27AAFF" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
